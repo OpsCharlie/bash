@@ -5,7 +5,7 @@
 
 # enable/disable tmux loading
 [[ ${USER} = root ]] && EN_TMUX=0 || EN_TMUX=1
-command tmux &>/dev/null || EN_TMUX=0
+command -v tmux &>/dev/null || EN_TMUX=0
 
 # manual set tmux
 #EN_TMUX=0
@@ -335,6 +335,14 @@ fi
 if [ -f ~/.bash_aliases ]; then
     . ~/.bash_aliases
 fi
+
+# source bash_completion
+if [ -f /etc/bash_completion ]; then
+    . /etc/bash_completion
+fi
+
+
+
 
 umask 022
 
