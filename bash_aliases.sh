@@ -88,7 +88,7 @@ function qr() {
 
 function transfer() {
     if [ $# -eq 0  ]; then
-        echo -e "No arguments specified. Usage:\necho transfer /tmp/test.md\ncat /tmp/test.md | transfer test.md"
+        echo -e "No arguments specified. Usage:\ntransfer /tmp/test.md\ncat /tmp/test.md | transfer test.md"
         return 1
     fi
     tmpfile=$( mktemp -t transferXXX  )
@@ -101,4 +101,30 @@ function transfer() {
     cat $tmpfile
     echo
     rm -f $tmpfile
+}
+
+function transfer_encrypt() {
+    if [ $# -eq 0  ]; then
+        echo -e "No arguments specified. Usage:\ntransfer /tmp/test.md\ncat /tmp/test.md | transfer test.md"
+        return 1
+    fi
+    tmpfile=$( mktemp -t transferXXX  )
+    if tty -s; then
+        basefile=$(basename "$1" | sed -e 's/[^a-zA-Z0-9._-]/-/g')
+        cat $1 | gpg -ac -o- | curl -X PUT --progress-bar --upload-file "-" "https://transfer.sh/$basefile" >> $tmpfile
+    else
+        cat $1 | gpg -ac -o- | curl -X PUT --progress-bar --upload-file "-" "https://transfer.sh/$1" >> $tmpfile
+    fi
+    cat $tmpfile
+    echo
+    rm -f $tmpfile
+}
+
+function transfer_decrypt() {
+    if [ $# -eq 0  ]; then
+        echo -e "No arguments specified. Usage:\ntransfer_decrypt Downloads/test.md"
+        return 1
+    fi
+    FILE="$1"
+    gpg --yes --output "$FILE" --decrypt "$FILE"
 }
