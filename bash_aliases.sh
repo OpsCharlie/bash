@@ -88,33 +88,75 @@ function qr() {
 
 function transfer() {
     if [ $# -eq 0  ]; then
-        echo -e "No arguments specified. Usage:\ntransfer /tmp/test.md\ncat /tmp/test.md | transfer test.md"
+        echo -e "No arguments specified. Usage:\ntransfer /tmp/test.md\ncat /tmp/test.md | transfer test.md\ntransfer <dir>"
         return 1
     fi
     tmpfile=$( mktemp -t transferXXX  )
+    file=$1
+
+    # upload stdin or file
     if tty -s; then
         basefile=$(basename "$1" | sed -e 's/[^a-zA-Z0-9._-]/-/g')
-        curl --progress-bar --upload-file "$1" "https://transfer.sh/$basefile" >> $tmpfile
+
+        if [ ! -e $file ]; then
+            echo "File $file doesn't exists."
+            return 1
+        fi
+
+        if [ -d $file ]; then
+            # tar directory and transfer tar
+            zipfile=$( mktemp -t transferXXX.tgz )
+            cd $(dirname $file) && tar cfz $zipfile $(basename $file)
+            curl --progress-bar --upload-file "$zipfile" "https://transfer.sh/$basefile.tgz" >> $tmpfile
+            rm -f $zipfile
+        else
+            # transfer file
+            curl --progress-bar --upload-file "$1" "https://transfer.sh/$basefile" >> $tmpfile
+        fi
     else
+        # transfer pipe
         curl --progress-bar --upload-file "-" "https://transfer.sh/$1" >> $tmpfile
     fi
+
     cat $tmpfile
     echo
     rm -f $tmpfile
 }
 
+
+
 function transfer_encrypt() {
     if [ $# -eq 0  ]; then
-        echo -e "No arguments specified. Usage:\ntransfer /tmp/test.md\ncat /tmp/test.md | transfer test.md"
+        echo -e "No arguments specified. Usage:\ntransfer /tmp/test.md\ncat /tmp/test.md | transfer test.md\ntransfer <dir>"
         return 1
     fi
     tmpfile=$( mktemp -t transferXXX  )
+    file=$1
+
+    # upload stdin or file
     if tty -s; then
         basefile=$(basename "$1" | sed -e 's/[^a-zA-Z0-9._-]/-/g')
-        cat $1 | gpg -ac -o- | curl -X PUT --progress-bar --upload-file "-" "https://transfer.sh/$basefile" >> $tmpfile
+
+        if [ ! -e $file ]; then
+            echo "File $file doesn't exists."
+            return 1
+        fi
+
+        if [ -d $file ]; then
+            # tar directory and transfer tar
+            zipfile=$( mktemp -t transferXXX.tgz )
+            cd $(dirname $file) && tar cfz $zipfile $(basename $file)
+            cat "$zipfile" | gpg -ac -o- | curl -X PUT --progress-bar --upload-file "-" "https://transfer.sh/encrypted_$basefile.tgz" >> $tmpfile
+            rm -f $zipfile
+        else
+            # transfer file
+            cat "$file" | gpg -ac -o- | curl -X PUT --progress-bar --upload-file "-" "https://transfer.sh/encrypted_$basefile" >> $tmpfile
+        fi
     else
-        cat $1 | gpg -ac -o- | curl -X PUT --progress-bar --upload-file "-" "https://transfer.sh/$1" >> $tmpfile
+        # transfer pipe
+        cat "$file" | gpg -ac -o- | curl -X PUT --progress-bar --upload-file "-" "https://transfer.sh/$1" >> $tmpfile
     fi
+
     cat $tmpfile
     echo
     rm -f $tmpfile
@@ -126,5 +168,5 @@ function transfer_decrypt() {
         return 1
     fi
     FILE="$1"
-    gpg --yes --output "$FILE" --decrypt "$FILE"
+    gpg --yes --output "$(dirname $FILE)/decrypted_$(basename $FILE | sed 's/encrypted_//g')" --decrypt "$FILE"
 }
