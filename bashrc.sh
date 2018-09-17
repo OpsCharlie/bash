@@ -148,24 +148,24 @@ HOST_COLOR=${BGreen}
 function fuzzypath() {
     if [ -z $2 ]
     then
-        COMPREPLY=( `ls` )
+        COMPREPLY=( `ls -a` )
     else
         DIRPATH=`echo "$2" | sed 's|[^/]*$||'`
         BASENAME=`echo "$2" | sed 's|.*/||'`
         FILTER=`echo "$BASENAME" | sed 's|.|\0.*|g'`
-        COMPREPLY=( `ls $DIRPATH | grep -i "$FILTER" | sed "s|^|$DIRPATH|g"` )
+        COMPREPLY=( `ls -a $DIRPATH | grep -i "$FILTER" | sed "s|^|$DIRPATH|g"` )
     fi
 }
 
 function fuzzypath_dir() {
     if [ -z $2 ]
     then
-        COMPREPLY=( `ls` )
+        COMPREPLY=( `ls -ap | egrep -v '\./|\.\./' | grep "/$" | tr -d "/"`)
     else
         DIRPATH=`echo "$2" | sed 's|[^/]*$||'`
         BASENAME=`echo "$2" | sed 's|.*/||'`
         FILTER=`echo "$BASENAME" | sed 's|.|\0.*|g'`
-        COMPREPLY=( `ls -p $DIRPATH | grep -i "${FILTER}/" | sed "s|^|$DIRPATH|g" | sed "s|/$||g"` )
+        COMPREPLY=( `ls -ap $DIRPATH | egrep -v '\./|\.\./' | grep "/$" | grep -i "${FILTER}" | sed "s|^|$DIRPATH|g" | sed "s|/$||g"` )
     fi
 }
 
