@@ -17,6 +17,8 @@ else
     GIT=1
 fi
 
+# enable/disable fuzzy search
+EN_FUZZY=1
 
 # ~/.bashrc: executed by bash(1) for non-login shells.
 # If not running interactively, don't do anything
@@ -141,6 +143,33 @@ else
 fi
 
 HOST_COLOR=${BGreen}
+
+
+function fuzzypath() {
+    if [ -z $2 ]
+    then
+        COMPREPLY=( `ls` )
+    else
+        DIRPATH=`echo "$2" | sed 's|[^/]*$||'`
+        BASENAME=`echo "$2" | sed 's|.*/||'`
+        FILTER=`echo "$BASENAME" | sed 's|.|\0.*|g'`
+        COMPREPLY=( `ls $DIRPATH | grep -i "$FILTER" | sed "s|^|$DIRPATH|g"` )
+    fi
+}
+
+function fuzzypath_dir() {
+    if [ -z $2 ]
+    then
+        COMPREPLY=( `ls` )
+    else
+        DIRPATH=`echo "$2" | sed 's|[^/]*$||'`
+        BASENAME=`echo "$2" | sed 's|.*/||'`
+        FILTER=`echo "$BASENAME" | sed 's|.|\0.*|g'`
+        COMPREPLY=( `ls -p $DIRPATH | grep -i "${FILTER}/" | sed "s|^|$DIRPATH|g" | sed "s|/$||g"` )
+    fi
+}
+
+
 function timer_now {
     date +%s%N
 }
@@ -390,6 +419,21 @@ bind 'TAB:menu-complete'
 bind '"\e[Z": menu-complete-backward'
 bind 'set colored-completion-prefix on'
 bind 'set colored-stats on'
+
+## fuzzy search. Disabled see below
+# if [ -f ~/.fuzzy_bash_completion ]; then
+   # source ~/.fuzzy_bash_completion
+   # fuzzy_setup_for_command ls
+   # fuzzy_setup_for_command cd
+# fi
+
+
+# enable fuzzy search
+if [ $EN_FUZZY -eq 1 ]; then
+    complete -o nospace -o filenames -F fuzzypath_dir cd
+    complete -o nospace -o filenames -F fuzzypath ls cat less tail vi vim
+fi
+
 
 # tab completion case insensitive
 bind 'set completion-ignore-case on'
