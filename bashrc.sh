@@ -148,12 +148,12 @@ HOST_COLOR=${BGreen}
 function fuzzypath() {
     if [ -z $2 ]
     then
-        COMPREPLY=( `ls -a` )
+        COMPREPLY=( `ls -a | egrep -v '\.$|\.\.$'` )
     else
         DIRPATH=`echo "$2" | sed 's|[^/]*$||'`
         BASENAME=`echo "$2" | sed 's|.*/||'`
         FILTER=`echo "$BASENAME" | sed 's|.|\0.*|g'`
-        COMPREPLY=( `ls -a $DIRPATH | grep -i "$FILTER" | sed "s|^|$DIRPATH|g"` )
+        COMPREPLY=( `ls -a $DIRPATH | egrep -v '\.$|\.\.$' | grep -i "$FILTER" | sed "s|^|$DIRPATH|g"` )
     fi
 }
 
@@ -431,7 +431,7 @@ bind 'set colored-stats on'
 # enable fuzzy search
 if [ $EN_FUZZY -eq 1 ]; then
     complete -o nospace -o filenames -F fuzzypath_dir cd
-    complete -o nospace -o filenames -F fuzzypath ls cat less tail vi vim
+    complete -o nospace -o filenames -F fuzzypath ls cat less tail cp mv vi vim
 fi
 
 
