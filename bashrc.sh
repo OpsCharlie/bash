@@ -145,27 +145,31 @@ fi
 HOST_COLOR=${BGreen}
 
 
+
+
 function fuzzypath() {
+    local IFS=$'\n'
     if [ -z $2 ]
     then
-        COMPREPLY=( `ls -a | egrep -v '\.$|\.\.$'` )
+        COMPREPLY=( $(\ls -a | egrep -v '\.$|\.\.$') )
     else
-        DIRPATH=`echo "$2" | sed 's|[^/]*$||'`
-        BASENAME=`echo "$2" | sed 's|.*/||'`
-        FILTER=`echo "$BASENAME" | sed 's|.|\0.*|g'`
-        COMPREPLY=( `ls -a $DIRPATH | egrep -v '\.$|\.\.$' | grep -i "$FILTER" | sed "s|^|$DIRPATH|g"` )
+        DIRPATH=$(echo "$2" | sed 's|[^/]*$||')
+        BASENAME=$(echo "$2" | sed 's|.*/||')
+        FILTER=$(echo "$BASENAME" | sed 's|.|\0.*|g')
+        COMPREPLY=( $(\ls -a $DIRPATH | egrep -v '\.$|\.\.$' | grep -i "$FILTER" 2>/dev/null | sed "s|^|$DIRPATH|g") )
     fi
 }
 
 function fuzzypath_dir() {
+    local IFS=$'\n'
     if [ -z $2 ]
     then
-        COMPREPLY=( `ls -ap | egrep -v '\./|\.\./' | grep "/$" | tr -d "/"`)
+        COMPREPLY=( $(\ls -ap | egrep -v '\./|\.\./' | grep "/$" | tr -d "/") )
     else
-        DIRPATH=`echo "$2" | sed 's|[^/]*$||'`
-        BASENAME=`echo "$2" | sed 's|.*/||'`
-        FILTER=`echo "$BASENAME" | sed 's|.|\0.*|g'`
-        COMPREPLY=( `ls -ap $DIRPATH | egrep -v '\./|\.\./' | grep "/$" | grep -i "${FILTER}" | sed "s|^|$DIRPATH|g" | sed "s|/$||g"` )
+        DIRPATH=$(echo "$2" | sed 's|[^/]*$||')
+        BASENAME=$(echo "$2" | sed 's|.*/||')
+        FILTER=$(echo "$BASENAME" | sed 's|.|\0.*|g')
+        COMPREPLY=( $(\ls -ap $DIRPATH | egrep -v '\./|\.\./' | grep "/$" | grep -i "${FILTER}" 2>/dev/null | sed "s|^|$DIRPATH|g" | sed "s|/$||g" ) )
     fi
 }
 
@@ -430,8 +434,8 @@ bind 'set colored-stats on'
 
 # enable fuzzy search
 if [ $EN_FUZZY -eq 1 ]; then
-    complete -o nospace -o filenames -F fuzzypath_dir cd
-    complete -o nospace -o filenames -F fuzzypath ls cat less tail cp mv vi vim
+    complete -o nospace -o filenames -o bashdefault -F fuzzypath_dir cd mkdir
+    complete -o nospace -o filenames -o bashdefault -F fuzzypath ls cat less tail cp mv vi vim
 fi
 
 
