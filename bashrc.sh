@@ -10,10 +10,10 @@ command -v tmux &>/dev/null || EN_TMUX=0
 # manual set tmux
 #EN_TMUX=0
 if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
-    base_session='C-B'
+    base_session='C-b'
     GIT=0
 else
-    base_session='C-A'
+    base_session='C-a'
     GIT=1
 fi
 
