@@ -13,7 +13,7 @@ alias cd..='cd ..'
 alias ..='cd ..'
 alias ...='cd ../..'
 alias s='cd ~/Notebooks/scripts/se_scripts'
-
+alias a='cd ~/Notebooks/ansible'
 alias bc='bc -l'
 alias gh='history | grep '
 
@@ -39,9 +39,7 @@ __add_command_replace_alias top 'htop'
 
 # alias goaccess 'goaccess -o report.html --real-time-html'
 alias unityrestart='DISPLAY=:0 unity --replace'
-alias hosts="gksudo gedit /etc/hosts &"
 alias hosts="sudo -E vi /etc/hosts"
-# alias hosts="gedit admin:///etc/hosts &"
 alias ap="ansible-playbook -s -k"
 alias wget='wget -c'    #Resume wget by default
 
