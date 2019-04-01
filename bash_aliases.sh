@@ -25,6 +25,8 @@ alias mv='mv -v'
 
 alias less0='LESSOPEN= /usr/bin/less'
 
+alias mmount="mount | /bin/grep -E '^/dev'"
+
 # function checks if the application is installed
 function __add_command_replace_alias() {
     if [ -x "$(which $2 2>&1)" ]; then

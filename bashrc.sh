@@ -10,10 +10,10 @@ command -v tmux &>/dev/null || EN_TMUX=0
 # manual set tmux
 #EN_TMUX=0
 if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
-    base_session='C-B'
+    base_session='C-b'
     GIT=0
 else
-    base_session='C-A'
+    base_session='C-a'
     GIT=1
 fi
 
@@ -34,6 +34,9 @@ shopt -s histappend
 # for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
 HISTSIZE=2000
 HISTFILESIZE=4000
+
+# Don't record some commands
+export HISTIGNORE="&:[ ]*:exit:ls:bg:fg:history:clear"
 
 # check the window size after each command and, if necessary,
 # update the values of LINES and COLUMNS.
@@ -445,6 +448,12 @@ bind 'set completion-ignore-case on'
 # search history with arrow keys
 bind '"\e[A": history-search-backward'
 bind '"\e[B": history-search-forward'
+
+
+# https://github.com/dvorka/hstr
+# if this is interactive shell, then bind hstr to Ctrl-r (for Vi mode check doc)
+[[ -x $(command -v hstr) ]] && { if [[ $- =~ .*i.* ]]; then bind '"\C-r": "\C-a hstr -- \C-j"'; fi }
+
 
 # trap every command
 trap 'timer_start' DEBUG
