@@ -12,8 +12,10 @@ alias sudo='sudo '   # use aliasses when using sudo
 alias cd..='cd ..'
 alias ..='cd ..'
 alias ...='cd ../..'
-alias s='cd ~/Notebooks/scripts/se_scripts'
 alias a='cd ~/Notebooks/ansible'
+alias s='cd ~/Notebooks/scripts/se_scripts'
+
+alias tmux='tmux -2'
 alias bc='bc -l'
 alias gh='history | grep '
 
@@ -38,19 +40,21 @@ __add_command_replace_alias tracepath 'mtr'
 __add_command_replace_alias top 'htop'
 
 # alias goaccess 'goaccess -o report.html --real-time-html'
-alias unityrestart='DISPLAY=:0 unity --replace'
-alias hosts="sudo -E vi /etc/hosts"
+# alias unityrestart='DISPLAY=:0 unity --replace'
+# alias hosts="gksudo gedit /etc/hosts &"
+# alias hosts="gedit admin:///etc/hosts &"
+alias hosts="sudo vi /etc/hosts"
 alias ap="ansible-playbook -s -k"
 alias wget='wget -c'    #Resume wget by default
 
 
 if [ -x "$(which highlight 2>&1)" ]; then
-    export LESSOPEN='| highlight -O xterm256 --style=solarized-dark %s'
+    export LESSOPEN='| highlight --out-format xterm256 --quiet --force --style solarized-light %s'
 fi
 
-if [ -x "$(which pygmentize 2>&1)" ]; then
-    export LESSOPEN='| pygmentize -gf console %s'
-fi
+# if [ -x "$(which pygmentize 2>&1)" ]; then
+    # export LESSOPEN='| pygmentize -gf console %s'
+# fi
 
 
 
