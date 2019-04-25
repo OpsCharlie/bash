@@ -452,7 +452,19 @@ bind '"\e[B": history-search-forward'
 
 # https://github.com/dvorka/hstr
 # if this is interactive shell, then bind hstr to Ctrl-r (for Vi mode check doc)
-[[ -x $(command -v hstr) ]] && { if [[ $- =~ .*i.* ]]; then bind '"\C-r": "\C-a hstr -- \C-j"'; fi }
+# [[ -x $(command -v hstr) ]] && { if [[ $- =~ .*i.* ]]; then bind '"\C-r": "\C-a hstr -- \C-j"'; fi }
+
+# https://github.com/junegunn/fzf
+# fuzzy search
+# CTRL-T - Paste the selected files and directories onto the command-line
+# CTRL-R - Paste the selected command from history onto the command-line
+# ALT-C - cd into the selected directory
+[ -f ~/.fzf.bash ] && source ~/.fzf.bash
+FZF_TMUX=$EN_TMUX
+FZF_TMUX_HEIGHT="20%"
+
+# https://github.com/sharkdp/fd
+command -v fd >/dev/null 2>&1 && FZF_DEFAULT_COMMAND='fd --type f'
 
 
 # trap every command
