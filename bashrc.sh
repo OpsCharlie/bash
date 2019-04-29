@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-# trap every command
-trap 'timer_start' DEBUG
 
 # export TERM=xterm-256color
 
@@ -386,6 +384,8 @@ if [ -f /etc/bash_completion ]; then
     . /etc/bash_completion
 fi
 
+# trap every command
+trap 'timer_start' DEBUG
 
 umask 022
 
