@@ -7,6 +7,9 @@
 [[ ${USER} = root ]] && EN_TMUX=0 || EN_TMUX=1
 command -v tmux &>/dev/null || EN_TMUX=0
 
+# is git available
+[[ -x "$(which git 2>&1)" ]] && GIT_AVAILABLE=1 || GIT_AVAILABLE=0
+
 # manual set tmux
 #EN_TMUX=0
 if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
@@ -297,8 +300,9 @@ function __makePS1() {
     # done
 
     # git branch
-    if [ -x "$(which git 2>&1)" ] && [ $GIT -eq 1 ]; then
-        local branch="$(git name-rev --name-only HEAD 2>/dev/null)"
+    if [ $GIT_AVAILABLE -eq 1 ] && [ $GIT -eq 1 ]; then
+        # local branch="$(git name-rev --name-only HEAD 2>/dev/null)"
+        local branch="$(git branch 2>/dev/null | grep '^*' | colrm 1 2)"
 
         if [ -n "${branch}" ]; then
             local git_status="$(git status --porcelain -b 2>/dev/null)"
