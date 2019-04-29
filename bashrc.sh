@@ -1,17 +1,21 @@
 #!/usr/bin/env bash
 
+# trap every command
+trap 'timer_start' DEBUG
 
-#export TERM=xterm-256color
+# export TERM=xterm-256color
 
 # enable/disable tmux loading
 [[ ${USER} = root ]] && EN_TMUX=0 || EN_TMUX=1
 command -v tmux &>/dev/null || EN_TMUX=0
 
+# manual set tmux
+#EN_TMUX=0
+
 # is git available
 [[ -x "$(which git 2>&1)" ]] && GIT_AVAILABLE=1 || GIT_AVAILABLE=0
 
-# manual set tmux
-#EN_TMUX=0
+# set base session and git when logged in via ssh
 if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
     base_session='C-b'
     GIT=0
@@ -31,6 +35,7 @@ EN_FUZZY=1
 # ... or force ignoredups and ignorespace
 HISTCONTROL=ignoredups:ignorespace
 export HISTTIMEFORMAT="| %d.%m.%y %T =>  "
+
 # append to the history file, don't overwrite it
 shopt -s histappend
 
@@ -382,26 +387,26 @@ if [ -f /etc/bash_completion ]; then
 fi
 
 
-
-
 umask 022
 
 export EDITOR=vim
 export PAGER=less
 
 
-
+# set local bin in path
 if [ -d "$HOME/bin" ] ; then
     PATH="$HOME/bin:$PATH"
 fi
 
-#TMUX completion
-[[ -f ~/.tmux/tmux_completion.sh ]] && source ~/.tmux/tmux_completion.sh
-
+# enable ssh-agent
 #if [ -z "$SSH_AUTH_SOCK" ] ; then
 #    eval `ssh-agent -s`
 #fi
 
+# TMUX completion
+[[ -f ~/.tmux/tmux_completion.sh ]] && source ~/.tmux/tmux_completion.sh
+
+# enable tmux and start session
 if [ $EN_TMUX -eq 1 ]; then
     ## TMUX
     #if which tmux >/dev/null 2>&1; then
@@ -467,9 +472,8 @@ bind '"\e[B": history-search-forward'
 FZF_TMUX=$EN_TMUX
 FZF_TMUX_HEIGHT="20%"
 
+# faster find
 # https://github.com/sharkdp/fd
 command -v fd >/dev/null 2>&1 && FZF_DEFAULT_COMMAND='fd --type f'
 
 
-# trap every command
-trap 'timer_start' DEBUG
