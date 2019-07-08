@@ -20,7 +20,8 @@ if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
 else
     base_session='C-a'
     # if tmux is enabled, disable git prompt. tmux will show git.
-    [[ $EN_TMUX -eq "1" ]] && GIT=0 || GIT=1
+    # [[ $EN_TMUX -eq "1" ]] && GIT=0 || GIT=1
+    GIT=1
 fi
 
 # enable/disable fuzzy search
