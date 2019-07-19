@@ -158,29 +158,34 @@ HOST_COLOR=${BGreen}
 
 
 
-function fuzzypath() {
+function _fuzzyfiles() {
     local IFS=$'\n'
     if [ -z $2 ]
     then
-        COMPREPLY=( $(\ls -a | egrep -v '\.$|\.\.$') )
+        COMPREPLY=( $(\ls -A) )
     else
         DIRPATH=$(echo "$2" | sed 's|[^/]*$||')
         BASENAME=$(echo "$2" | sed 's|.*/||')
         FILTER=$(echo "$BASENAME" | sed 's|.|\0.*|g')
-        COMPREPLY=( $(\ls -a $DIRPATH | egrep -v '\.$|\.\.$' | grep -i "$FILTER" 2>/dev/null | sed "s|^|$DIRPATH|g") )
+        COMPREPLY=( $(\ls -a $DIRPATH 2>/dev/null | egrep -v '\.$|\.\.$' | grep -i "$FILTER" 2>/dev/null | sed "s|^|$DIRPATH|g") )
     fi
 }
 
-function fuzzypath_dir() {
+function _fuzzypath() {
     local IFS=$'\n'
     if [ -z $2 ]
     then
-        COMPREPLY=( $(\ls -ap | egrep -v '\./|\.\./' | grep "/$" | tr -d "/") )
+        COMPREPLY=( $(find -L -path './*' -prune -type d -printf '%f/\n' 2>/dev/null ) )
     else
         DIRPATH=$(echo "$2" | sed 's|[^/]*$||')
         BASENAME=$(echo "$2" | sed 's|.*/||')
         FILTER=$(echo "$BASENAME" | sed 's|.|\0.*|g')
-        COMPREPLY=( $(\ls -ap $DIRPATH | egrep -v '\./|\.\./' | grep "/$" | grep -i "${FILTER}" 2>/dev/null | sed "s|^|$DIRPATH|g" | sed "s|/$||g" ) )
+        DIRS=$(find -L ${DIRPATH} -maxdepth 1 -type d -printf '%f/\n' 2>/dev/null | grep -v "//")
+        X=$(echo "$DIRS" | \grep -i "$FILTER" 2>/dev/null | sed 's|^\./||g')
+        # create array from X
+        COMPREPLY=($X)
+        # add DIRPATH as prefix
+        COMPREPLY=("${COMPREPLY[@]/#/$DIRPATH}")
     fi
 }
 
@@ -438,18 +443,11 @@ bind '"\e[Z": menu-complete-backward'
 bind 'set colored-completion-prefix on'
 bind 'set colored-stats on'
 
-## fuzzy search. Disabled see below
-# if [ -f ~/.fuzzy_bash_completion ]; then
-   # source ~/.fuzzy_bash_completion
-   # fuzzy_setup_for_command ls
-   # fuzzy_setup_for_command cd
-# fi
-
 
 # enable fuzzy search
 if [ $EN_FUZZY -eq 1 ]; then
-    complete -o nospace -o filenames -o bashdefault -F fuzzypath_dir cd mkdir
-    complete -o nospace -o filenames -o bashdefault -F fuzzypath ls cat less tail cp mv vi vim
+    complete -o nospace -o dirnames -o bashdefault -F _fuzzypath cd mkdir
+    complete -o nospace -o filenames -o bashdefault -F _fuzzyfiles ls cat less tail cp mv vi vim
 fi
 
 
