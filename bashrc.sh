@@ -175,12 +175,12 @@ function _fuzzypath() {
     local IFS=$'\n'
     if [ -z $2 ]
     then
-        COMPREPLY=( $(find -L -path './*' -prune -type d -print0 2>/dev/null | xargs -0 -I {} printf "%q\n" "{}" | tr -d '\./' ) )
+        COMPREPLY=( $(find -L -path './*' -prune -type d -print0 2>/dev/null | xargs -0 -I {} printf "%q\n" "{}" | sed 's|^\./||' ) )
     else
         DIRPATH=$(echo "$2" | sed 's|[^/]*$||')
         BASENAME=$(echo "$2" | sed 's|.*/||')
         FILTER=$(echo "$BASENAME" | sed 's|.|\0.*|g')
-        DIRS=$(find -L ${DIRPATH} -maxdepth 1 -type d -print0 2>/dev/null | xargs -0 -I {} printf "%q\n" "{}" | tr -d '\./' | grep -v "//")
+        DIRS=$(find -L ${DIRPATH} -maxdepth 1 -type d -print0 2>/dev/null | xargs -0 -I {} printf "%q\n" "{}" | sed 's|^\./||' | grep -v "//")
         X=$(echo "$DIRS" | \grep -i "$FILTER" 2>/dev/null | sed 's|^\./||g')
         # create array from X
         COMPREPLY=($X)
