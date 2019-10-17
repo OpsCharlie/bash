@@ -162,7 +162,7 @@ function _fuzzyfiles() {
     local IFS=$'\n'
     if [ -z $2 ]
     then
-        COMPREPLY=( $(\ls -A) )
+        COMPREPLY=( $(\ls) )
     else
         DIRPATH=$(echo "$2" | sed 's|[^/]*$||')
         BASENAME=$(echo "$2" | sed 's|.*/||')
@@ -175,12 +175,16 @@ function _fuzzypath() {
     local IFS=$'\n'
     if [ -z $2 ]
     then
-        COMPREPLY=( $(find -L -path './*' -prune -type d -print0 2>/dev/null | xargs -0 -I {} printf "%q/\n" "{}" | sed 's|^\./||' ) )
+        COMPREPLY=( $(find -L -maxdepth 1 -path './*' -not -path '*/\.*' -type d -print | sed -e 's/[^a-zA-Z0-9,._+@%/-]/\\&/g;' -e 's|^\./||' -e 's/$/\//') )
     else
-        DIRPATH=$(echo "$2" | sed 's|[^/]*$||')
+        DIRPATH=$(echo "$2" | sed 's|[^/]*$||' | sed 's|//|/|')
         BASENAME=$(echo "$2" | sed 's|.*/||')
         FILTER=$(echo "$BASENAME" | sed 's|.|\0.*|g')
-        DIRS=$(find -L ${DIRPATH} -maxdepth 1 -type d -print0 2>/dev/null | xargs -0 -I {} printf "%q/\n" "{}" | sed 's|^\./||' | grep -v "//")
+        if [[ $BASENAME == .* ]]; then
+            DIRS=$(find -L ${DIRPATH} -maxdepth 1 -type d -print | grep "/\." | sed -e 's/[^a-zA-Z0-9,._+@%/-]/\\&/g;' -e 's|^\./||' -e 's/$/\//' | grep -v "//")
+        else
+            DIRS=$(find -L ${DIRPATH} -maxdepth 1 -type d -print | egrep -v "/\." | sed -e 's/[^a-zA-Z0-9,._+@%/-]/\\&/g;' -e 's|^\./||' -e 's/$/\//' | grep -v "//")
+        fi
         X=$(echo "$DIRS" | \grep -i "$FILTER" 2>/dev/null | sed 's|^\./||g')
         # create array from X
         COMPREPLY=($X)
