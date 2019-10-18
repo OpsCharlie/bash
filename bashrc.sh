@@ -160,32 +160,40 @@ HOST_COLOR=${BGreen}
 
 function _fuzzyfiles() {
     local IFS=$'\n'
-    if [ -z $2 ]
-    then
+    if [ -z $2 ]; then
         COMPREPLY=( $(\ls) )
-    else
-        DIRPATH=$(echo "$2" | sed 's|[^/]*$||')
-        BASENAME=$(echo "$2" | sed 's|.*/||')
-        FILTER=$(echo "$BASENAME" | sed 's|.|\0.*|g')
-        COMPREPLY=( $(\ls -a $DIRPATH 2>/dev/null | egrep -v '\.$|\.\.$' | grep -i "$FILTER" 2>/dev/null | sed "s|^|$DIRPATH|g") )
-    fi
-}
-
-function _fuzzypath() {
-    local IFS=$'\n'
-    if [ -z $2 ]
-    then
-        COMPREPLY=( $(find -L -maxdepth 1 -path './*' -not -path '*/\.*' -type d -print | sed -e 's/[^a-zA-Z0-9,._+@%/-]/\\&/g;' -e 's|^\./||' -e 's/$/\//') )
     else
         DIRPATH=$(echo "$2" | sed 's|[^/]*$||' | sed 's|//|/|')
         BASENAME=$(echo "$2" | sed 's|.*/||')
         FILTER=$(echo "$BASENAME" | sed 's|.|\0.*|g')
         if [[ $BASENAME == .* ]]; then
-            DIRS=$(find -L ${DIRPATH} -maxdepth 1 -type d -print | grep "/\." | sed -e 's/[^a-zA-Z0-9,._+@%/-]/\\&/g;' -e 's|^\./||' -e 's/$/\//' | grep -v "//")
+            COMPREPLY=( $(\ls -a $DIRPATH 2>/dev/null | egrep -v '\.$|\.\.$' | egrep '^\.' | grep -i "$FILTER" 2>/dev/null | sed "s|^|$DIRPATH|g") )
         else
-            DIRS=$(find -L ${DIRPATH} -maxdepth 1 -type d -print | egrep -v "/\." | sed -e 's/[^a-zA-Z0-9,._+@%/-]/\\&/g;' -e 's|^\./||' -e 's/$/\//' | grep -v "//")
+            COMPREPLY=( $(\ls -a $DIRPATH 2>/dev/null | egrep -v '^\.' | grep -i "$FILTER" 2>/dev/null | sed "s|^|$DIRPATH|g") )
         fi
-        X=$(echo "$DIRS" | \grep -i "$FILTER" 2>/dev/null | sed 's|^\./||g')
+    fi
+    # echo
+    # echo DIRPATH=$DIRPATH
+    # echo BASENAME=$BASENAME
+    # echo FILTER=$FILTER
+    # echo COMPREPLY=$COMPREPLY
+    # echo
+}
+
+function _fuzzypath() {
+    local IFS=$'\n'
+    if [ -z $2 ]; then
+        COMPREPLY=( $(find -L -maxdepth 1 -path './*' -not -path '*/\.*' -type d -print | sed -e 's|^\./||') )
+    else
+        DIRPATH=$(echo "$2" | sed 's|[^/]*$||' | sed 's|//|/|')
+        BASENAME=$(echo "$2" | sed 's|.*/||')
+        FILTER=$(echo "$BASENAME" | sed 's|.|\0.*|g')
+        if [[ $BASENAME == .* ]]; then
+            DIRS=$(find -L ${DIRPATH} -maxdepth 1 -type d -print | grep "/\." | sed -e 's|^\./||' | grep -v "//")
+        else
+            DIRS=$(find -L ${DIRPATH} -maxdepth 1 -type d -print | egrep -v "/\." | sed -e 's|^\./||' | grep -v "//")
+        fi
+        X=$(echo "$DIRS" | \grep -i "$FILTER" 2>/dev/null | sed 's|/$||g')
         # create array from X
         COMPREPLY=($X)
         # add DIRPATH as prefix
@@ -196,6 +204,7 @@ function _fuzzypath() {
     # echo BASENAME=$BASENAME
     # echo FILTER=$FILTER
     # echo COMPREPLY=$COMPREPLY
+    # echo
 }
 
 
@@ -455,7 +464,7 @@ bind 'set colored-stats on'
 
 # enable fuzzy search
 if [ $EN_FUZZY -eq 1 ]; then
-    complete -o nospace -o dirnames -o bashdefault -F _fuzzypath cd mkdir
+    complete -o nospace -o filenames -o bashdefault -F _fuzzypath cd mkdir
     complete -o nospace -o filenames -o bashdefault -F _fuzzyfiles ls cat less tail cp mv vi vim
 fi
 
