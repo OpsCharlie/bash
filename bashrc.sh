@@ -204,9 +204,9 @@ function _fuzzypath() {
             fi
         else
             if [ -z "$DIRPATH" ]; then
-                DIRS=$(\ls -d ${DIRPATH}*/)
+                DIRS=$(\ls -d ${DIRPATH}*/ 2>/dev/null)
             else
-                DIRS=$(\ls -d ${DIRPATH}*/ | sed "s|$DIRPATH||g")
+                DIRS=$(\ls -d ${DIRPATH}*/ 2>/dev/null | sed "s|$DIRPATH||g")
             fi
         fi
         X=$(echo "$DIRS" | \grep -i "$BASENAME" 2>/dev/null | sed 's|/$||g')
