@@ -158,7 +158,7 @@ HOST_COLOR=${BGreen}
 
 
 
-function _fuzzyfiles() {
+function _fuzzyfiles()  {
     local IFS=$'\n'
     if [ -z $2 ]; then
         COMPREPLY=( $(\ls) )
@@ -167,43 +167,62 @@ function _fuzzyfiles() {
         BASENAME=$(echo "$2" | sed 's|.*/||')
         FILTER=$(echo "$BASENAME" | sed 's|.|\0.*|g')
         if [[ $BASENAME == .* ]]; then
-            COMPREPLY=( $(\ls -a $DIRPATH 2>/dev/null | egrep -v '\.$|\.\.$' | egrep '^\.' | grep -i "$FILTER" 2>/dev/null | sed "s|^|$DIRPATH|g") )
+            FILES=$(\ls -A $DIRPATH 2>/dev/null)
         else
-            COMPREPLY=( $(\ls -a $DIRPATH 2>/dev/null | egrep -v '^\.' | grep -i "$FILTER" 2>/dev/null | sed "s|^|$DIRPATH|g") )
+            FILES=$(\ls -A $DIRPATH 2>/dev/null | egrep -v '^\.')
         fi
+        X=$(echo "$FILES" | \grep -i "$BASENAME" 2>/dev/null)
+        if [ -z "$X"  ]; then
+            X=$(echo "$FILES" | \grep -i "$FILTER" 2>/dev/null)
+        fi
+        # create array from X
+        COMPREPLY=($X)
+        # add DIRPATH as prefix
+        COMPREPLY=("${COMPREPLY[@]/#/$DIRPATH}")
     fi
     # echo
     # echo DIRPATH=$DIRPATH
     # echo BASENAME=$BASENAME
     # echo FILTER=$FILTER
-    # echo COMPREPLY=$COMPREPLY
+    # echo COMPREPLY=${COMPREPLY[@]}
     # echo
 }
 
 function _fuzzypath() {
     local IFS=$'\n'
     if [ -z $2 ]; then
-        COMPREPLY=( $(find -L -maxdepth 1 -path './*' -not -path '*/\.*' -type d -print | sed -e 's|^\./||') )
+        COMPREPLY=( $(\ls -d */ | sed 's|/$||') )
     else
         DIRPATH=$(echo "$2" | sed 's|[^/]*$||' | sed 's|//|/|')
         BASENAME=$(echo "$2" | sed 's|.*/||')
         FILTER=$(echo "$BASENAME" | sed 's|.|\0.*|g')
         if [[ $BASENAME == .* ]]; then
-            DIRS=$(find -L ${DIRPATH} -maxdepth 1 -type d -print | grep "/\." | sed -e 's|^\./||' | grep -v "//")
+            if [ -z "$DIRPATH" ]; then
+                DIRS=$(\ls -d .*/ | \egrep -v '^\./|^\.\./')
+            else
+                DIRS=$(\ls -d ${DIRPATH}.*/ | \egrep -v '^\./|^\.\./' | sed "s|$DIRPATH||g")
+            fi
         else
-            DIRS=$(find -L ${DIRPATH} -maxdepth 1 -type d -print | egrep -v "/\." | sed -e 's|^\./||' | grep -v "//")
+            if [ -z "$DIRPATH" ]; then
+                DIRS=$(\ls -d ${DIRPATH}*/)
+            else
+                DIRS=$(\ls -d ${DIRPATH}*/ | sed "s|$DIRPATH||g")
+            fi
         fi
-        X=$(echo "$DIRS" | \grep -i "$FILTER" 2>/dev/null | sed 's|/$||g')
+        X=$(echo "$DIRS" | \grep -i "$BASENAME" 2>/dev/null | sed 's|/$||g')
+        if [ -z "$X"  ]; then
+            X=$(echo "$DIRS" | \grep -i "$FILTER" 2>/dev/null | sed 's|/$||g')
+        fi
         # create array from X
         COMPREPLY=($X)
         # add DIRPATH as prefix
-        # COMPREPLY=("${COMPREPLY[@]/#/$DIRPATH}")
+        COMPREPLY=("${COMPREPLY[@]/#/$DIRPATH}")
     fi
     # echo
     # echo DIRPATH=$DIRPATH
     # echo BASENAME=$BASENAME
     # echo FILTER=$FILTER
-    # echo COMPREPLY=$COMPREPLY
+    # echo COMPREPLY=${COMPREPLY[@]}
     # echo
 }
 
