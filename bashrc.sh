@@ -200,13 +200,13 @@ function _fuzzypath() {
             if [ -z "$DIRPATH" ]; then
                 DIRS=$(\ls -d .*/ | \egrep -v '^\./|^\.\./')
             else
-                DIRS=$(\ls -d ${DIRPATH}.*/ | \egrep -v '^\./|^\.\./' | sed "s|$DIRPATH||g")
+                DIRS=$(\ls -d ${DIRPATH}.*/ | \egrep -v '^\./|^\.\./' | sed "s|^$DIRPATH||g")
             fi
         else
             if [ -z "$DIRPATH" ]; then
                 DIRS=$(\ls -d ${DIRPATH}*/ 2>/dev/null)
             else
-                DIRS=$(\ls -d ${DIRPATH}*/ 2>/dev/null | sed "s|$DIRPATH||g")
+                DIRS=$(\ls -d ${DIRPATH}*/ 2>/dev/null | sed "s|^$DIRPATH||g")
             fi
         fi
         X=$(echo "$DIRS" | \grep -i "$BASENAME" 2>/dev/null | sed 's|/$||g')
