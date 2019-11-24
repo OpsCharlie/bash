@@ -198,9 +198,9 @@ function _fuzzypath() {
         FILTER=$(echo "$BASENAME" | sed 's|.|\0.*|g')
         if [[ $BASENAME == .* ]]; then
             if [ -z "$DIRPATH" ]; then
-                DIRS=$(\ls -d .*/ | \egrep -v '^\./|^\.\./')
+                DIRS=$(\ls -d .*/ | \egrep -v '^\./$|^\.\./$')
             else
-                DIRS=$(\ls -d ${DIRPATH}.*/ | \egrep -v '^\./|^\.\./' | sed "s|^$DIRPATH||g")
+                DIRS=$(\ls -d ${DIRPATH}.*/ | sed "s|^$DIRPATH||g" | \egrep -v '^\./$|^\.\./$')
             fi
         else
             if [ -z "$DIRPATH" ]; then
