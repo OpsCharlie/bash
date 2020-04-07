@@ -12,7 +12,7 @@ alias sudo='sudo '   # use aliasses when using sudo
 alias cd..='cd ..'
 alias ..='cd ..'
 alias ...='cd ../..'
-alias a='cd ~/Notebooks/ansible'
+alias a='cd ~/Notebooks/ansible/se'
 alias s='cd ~/Notebooks/scripts/se_scripts'
 
 alias tmux='tmux -2'
@@ -47,7 +47,7 @@ __add_command_replace_alias fd 'fdfind'
 # alias hosts="gksudo gedit /etc/hosts &"
 # alias hosts="gedit admin:///etc/hosts &"
 alias hosts="sudo vi /etc/hosts"
-alias ap="ansible-playbook -s -k"
+alias ap="ansible-playbook "
 alias wget='wget -c'    #Resume wget by default
 
 
