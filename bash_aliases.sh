@@ -17,15 +17,19 @@ alias s='cd ~/Notebooks/scripts/se_scripts'
 
 alias tmux='tmux -2'
 alias bc='bc -l'
-alias gh='history | grep '
+alias historyg='history | grep '
 
 alias mkdir='mkdir -p -v'
 alias mv='mv -v'
-#alias rm='rm -Iv --one-file-system --preserve-root'
-
+alias rm='rm -I --one-file-system --preserve-root'
+alias chown='chown --preserve-root'
+alias chmod='chmod --preserve-root'
+alias chgrp='chgrp --preserve-root'
 alias less0='LESSOPEN= /usr/bin/less'
 
-alias mmount="mount | /bin/grep -E '^/dev'"
+alias mount='mount | column -t'
+alias dmount='mount | /bin/grep -E "^/dev"'
+
 
 # function checks if the application is installed
 function __add_command_replace_alias() {
@@ -46,9 +50,10 @@ __add_command_replace_alias fd 'fdfind'
 # alias unityrestart='DISPLAY=:0 unity --replace'
 # alias hosts="gksudo gedit /etc/hosts &"
 # alias hosts="gedit admin:///etc/hosts &"
-alias hosts="sudo vi /etc/hosts"
-alias ap="ansible-playbook "
+alias hosts='sudo vi /etc/hosts'
+alias ap='ansible-playbook'
 alias wget='wget -c'    #Resume wget by default
+alias wget0='wget -O /dev/null'
 
 
 if [ -x "$(which highlight 2>&1)" ]; then
