@@ -163,8 +163,12 @@ function _fuzzyfiles()  {
     if [ -z $2 ]; then
         COMPREPLY=( $(\ls) )
     else
-        DIRPATH=$(echo "$2" | sed 's|[^/]*$||' | sed 's|//|/|')
-        BASENAME=$(echo "$2" | sed 's|.*/||')
+        DIR="$2"
+        if [[ $DIR =~ ^~ ]]; then
+            DIR="${2/\~/$HOME}"
+        fi
+        DIRPATH=$(echo "$DIR" | sed 's|[^/]*$||' | sed 's|//|/|')
+        BASENAME=$(echo "$DIR" | sed 's|.*/||')
         FILTER=$(echo "$BASENAME" | sed 's|.|\0.*|g')
         if [[ $BASENAME == .* ]]; then
             FILES=$(\ls -A $DIRPATH 2>/dev/null)
@@ -193,8 +197,12 @@ function _fuzzypath() {
     if [ -z $2 ]; then
         COMPREPLY=( $(\ls -d */ | sed 's|/$||') )
     else
-        DIRPATH=$(echo "$2" | sed 's|[^/]*$||' | sed 's|//|/|')
-        BASENAME=$(echo "$2" | sed 's|.*/||')
+        DIR="$2"
+        if [[ $DIR =~ ^~ ]]; then
+            DIR="${2/\~/$HOME}"
+        fi
+        DIRPATH=$(echo "$DIR" | sed 's|[^/]*$||' | sed 's|//|/|')
+        BASENAME=$(echo "$DIR" | sed 's|.*/||')
         FILTER=$(echo "$BASENAME" | sed 's|.|\0.*|g')
         if [[ $BASENAME == .* ]]; then
             if [ -z "$DIRPATH" ]; then
@@ -219,6 +227,7 @@ function _fuzzypath() {
         COMPREPLY=("${COMPREPLY[@]/#/$DIRPATH}")
     fi
     # echo
+    # echo DIR=$DIR
     # echo DIRPATH=$DIRPATH
     # echo BASENAME=$BASENAME
     # echo FILTER=$FILTER
