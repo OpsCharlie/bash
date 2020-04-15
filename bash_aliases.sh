@@ -186,3 +186,12 @@ function transfer_decrypt() {
 function urldecode() {
     awk -niord '{printf RT?$0chr("0x"substr(RT,2)):$0}' RS=%.. <<< "$@"
 }
+
+function eth() {
+    if [ ! -z $1 ]; then
+        curl -s "eur.rate.sx/eth@$1"
+    else
+        curl -s "eur.rate.sx/eth"
+    fi
+}
+
