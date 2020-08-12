@@ -451,6 +451,9 @@ if [ -d "$HOME/bin" ] ; then
     PATH="$HOME/bin:$PATH"
 fi
 
+# remove duplicate entries
+PATH="$(perl -e 'print join(":", grep { not $seen{$_}++  } split(/:/, $ENV{PATH}))')"
+
 # enable ssh-agent
 #if [ -z "$SSH_AUTH_SOCK" ] ; then
 #    eval `ssh-agent -s`
