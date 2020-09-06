@@ -87,15 +87,19 @@ function genpwd() {
 
 
 function weather() {
-    curl http://wttr.in/"$1"
+    curl https://wttr.in/"$1"
+}
+
+function weather2() {
+    curl https://v2.wttr.in/"$1"
 }
 
 function cheat() {
-    curl http://cheat.sh/"$1"
+    curl https://cheat.sh/"$1"
 }
 
 function qr() {
-    curl http://qrenco.de/"$1"
+    curl https://qrenco.de/"$1"
 }
 
 function transfer() {
