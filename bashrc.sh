@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-
 # export TERM=xterm-256color
 
 # enable/disable tmux loading
@@ -480,7 +479,11 @@ if [ $EN_TMUX -eq 1 ]; then
             tmux new-session -d -t $base_session -s $session_name
             tmux -2 attach-session -t $session_name \; set-option destroy-unattached
         else
-            tmux -2 attach-session -t $base_session
+            if [ -f ~/.session.tmux ]; then
+                tmux -2 attach-session -t $base_session \; source-file ~/.session.tmux
+            else
+                tmux -2 attach-session -t $base_session
+            fi
         fi
     fi
 fi
