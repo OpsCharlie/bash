@@ -523,6 +523,4 @@ FZF_TMUX_HEIGHT="20%"
 
 # faster find
 # https://github.com/sharkdp/fd
-command -v fd >/dev/null 2>&1 && FZF_DEFAULT_COMMAND='fd --type f'
-
-
+command -v fd >/dev/null 2>&1 && export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'; export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
