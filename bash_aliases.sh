@@ -45,6 +45,7 @@ __add_command_replace_alias traceroute 'mtr'
 __add_command_replace_alias tracepath 'mtr'
 __add_command_replace_alias top 'htop'
 __add_command_replace_alias fd 'fdfind'
+__add_command_replace_alias rm 'trash-put'
 
 # alias goaccess 'goaccess -o report.html --real-time-html'
 # alias unityrestart='DISPLAY=:0 unity --replace'
