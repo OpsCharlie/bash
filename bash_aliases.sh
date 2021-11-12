@@ -12,8 +12,8 @@ alias sudo='sudo '   # use aliasses when using sudo
 alias cd..='cd ..'
 alias ..='cd ..'
 alias ...='cd ../..'
-alias a='cd ~/Notebooks/ansible/se'
-alias s='cd ~/Notebooks/scripts/se_scripts'
+alias a='cd ~/ansible/lxd'
+alias s='cd ~/ansible/sofico/roles'
 
 alias tmux='tmux -2'
 alias bc='bc -l'
