@@ -436,6 +436,10 @@ if [ -f /etc/bash_completion ]; then
     . /etc/bash_completion
 fi
 
+if [ -f /snap/lxd/current/etc/bash_completion.d/snap.lxd.lxc ]; then
+    . /snap/lxd/current/etc/bash_completion.d/snap.lxd.lxc
+fi
+
 # trap every command
 trap 'timer_start' DEBUG
 
