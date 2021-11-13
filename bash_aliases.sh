@@ -14,6 +14,7 @@ alias ..='cd ..'
 alias ...='cd ../..'
 alias a='cd ~/ansible/lxd'
 alias s='cd ~/ansible/sofico/roles'
+alias c='clear'
 
 alias tmux='tmux -2'
 alias bc='bc -l'
