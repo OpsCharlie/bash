@@ -30,7 +30,7 @@ alias less0='LESSOPEN= /usr/bin/less'
 
 alias mount='mount | column -t'
 # alias dmount='mount | /bin/grep -E "^/dev"'
-alias df='df -x squashfs'
+alias df='df -x squashfs -x tmpfs'
 
 # function checks if the application is installed
 function __add_command_replace_alias() {
