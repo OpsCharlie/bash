@@ -330,6 +330,11 @@ function __makePS1() {
 
     # PS1+=":\[${BBlue}\]\w" # working directory
     PS1+=":\[\033[38;5;111m\]\w" # working directory
+ 
+    # python env
+    if [[ -v VIRTUAL_ENV ]]; then
+      PS1+=" ${YELLOW}(${VIRTUAL_ENV##*/})${COLOR_OFF}"
+    fi
 
     # background jobs
     local NO_JOBS=`jobs -p | wc -w`

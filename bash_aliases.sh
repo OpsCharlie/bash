@@ -6,14 +6,12 @@ alias ls='ls $__LS_OPTIONS'
 alias ll='ls $__LS_OPTIONS -l'
 alias la='ls $__LS_OPTIONS -la'
 alias l='ls $__LS_OPTIONS -CF'
-# alias crontab='/usr/bin/crontab -u www-data'
-alias sudo='sudo '   # use aliasses when using sudo
+alias sudo='sudo '   # use aliases when using sudo
 
 alias cd..='cd ..'
 alias ..='cd ..'
 alias ...='cd ../..'
 alias a='cd ~/ansible/lxd'
-alias s='cd ~/ansible/sofico/roles'
 alias c='clear'
 
 alias tmux='tmux -2'
@@ -28,8 +26,7 @@ alias chmod='chmod --preserve-root'
 alias chgrp='chgrp --preserve-root'
 alias less0='LESSOPEN= /usr/bin/less'
 
-alias mount='mount | column -t'
-# alias dmount='mount | /bin/grep -E "^/dev"'
+alias mmount="mount | /bin/grep -E '^/dev' | column -t"
 alias df='df -x squashfs -x tmpfs'
 
 # function checks if the application is installed
