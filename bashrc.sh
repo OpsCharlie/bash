@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2034
 
 # export TERM=xterm-256color
 
@@ -10,10 +11,10 @@ command -v tmux &>/dev/null || EN_TMUX=0
 #EN_TMUX=0
 
 # is git available
-[[ -x "$(which git 2>&1)" ]] && GIT_AVAILABLE=1 || GIT_AVAILABLE=0
+[[ -x $(command -v git 2>&1) ]] && GIT_AVAILABLE=1 || GIT_AVAILABLE=0
 
 # set base session and git when logged in via ssh
-if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
+if [[ -n $SSH_CLIENT ]] || [[ -n $SSH_TTY ]]; then
     base_session='C-b'
     GIT=0
 else
@@ -28,7 +29,10 @@ EN_FUZZY=1
 
 # ~/.bashrc: executed by bash(1) for non-login shells.
 # If not running interactively, don't do anything
-[ -z "$PS1" ] && return
+case $- in
+    *i*) ;;
+      *) return;;
+esac
 
 # don't put duplicate lines in the history. See bash(1) for more options
 # ... or force ignoredups and ignorespace
@@ -50,10 +54,10 @@ export HISTIGNORE="&:[ ]*:exit:ls:bg:fg:history:clear"
 shopt -s checkwinsize
 
 # make less more friendly for non-text input files, see lesspipe(1)
-[ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
+[[ -x /usr/bin/lesspipe ]] && eval "$(SHELL=/bin/sh lesspipe)"
 
 # set variable identifying the chroot you work in (used in the prompt below)
-if [ -z "${debian_chroot}" ] && [ -r /etc/debian_chroot ]; then
+if [[ -z ${debian_chroot} ]] && [[ -r /etc/debian_chroot ]]; then
     debian_chroot=$(cat /etc/debian_chroot)
 fi
 
@@ -142,24 +146,21 @@ export LESS_TERMCAP_ue=$'\e[0m'           # end underline
 export LESS_TERMCAP_us=$'\e[04;38;5;146m' # begin underline
 
 
-if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null
-then
-	# We have color support; assume it's compliant with Ecma-48
-	# (ISO/IEC-6429). (Lack of such support is extremely rare, and such
-	# a case would tend to support setf rather than setaf.)
-	color_prompt=yes
+if [[ -x /usr/bin/tput ]] && tput setaf 1 >&/dev/null; then
+    # We have color support; assume it's compliant with Ecma-48
+    # (ISO/IEC-6429). (Lack of such support is extremely rare, and such
+    # a case would tend to support setf rather than setaf.)
+    color_prompt=yes
 else
-	color_prompt=
+    color_prompt=
 fi
 
 HOST_COLOR=${BGreen}
 
 
-
-
 function _fuzzyfiles()  {
     local IFS=$'\n'
-    if [ -z $2 ]; then
+    if [[ -z $2 ]]; then
         COMPREPLY=( $(\ls) )
     else
         DIR="$2"
@@ -172,12 +173,9 @@ function _fuzzyfiles()  {
         if [[ $BASENAME == .* ]]; then
             FILES=$(\ls -A $DIRPATH 2>/dev/null)
         else
-            FILES=$(\ls -A $DIRPATH 2>/dev/null | egrep -v '^\.')
+            FILES=$(\ls -A $DIRPATH 2>/dev/null | \grep -Ev '^\.')
         fi
-        X=$(echo "$FILES" | \grep -i "$BASENAME" 2>/dev/null)
-        if [ -z "$X"  ]; then
-            X=$(echo "$FILES" | \grep -i "$FILTER" 2>/dev/null)
-        fi
+        X=$(echo "$FILES" | fzf --filter "$BASENAME" 2>/dev/null)
         # create array from X
         COMPREPLY=($X)
         # add DIRPATH as prefix
@@ -193,7 +191,7 @@ function _fuzzyfiles()  {
 
 function _fuzzypath() {
     local IFS=$'\n'
-    if [ -z $2 ]; then
+    if [[ -z $2 ]]; then
         COMPREPLY=( $(\ls -d */ | sed 's|/$||') )
     else
         DIR="$2"
@@ -202,24 +200,20 @@ function _fuzzypath() {
         fi
         DIRPATH=$(echo "$DIR" | sed 's|[^/]*$||' | sed 's|//|/|')
         BASENAME=$(echo "$DIR" | sed 's|.*/||')
-        FILTER=$(echo "$BASENAME" | sed 's|.|\0.*|g')
         if [[ $BASENAME == .* ]]; then
             if [ -z "$DIRPATH" ]; then
-                DIRS=$(\ls -d .*/ | \egrep -v '^\./$|^\.\./$')
+                DIRS=$(\ls -d .*/ | \grep -Ev '^\./$|^\.\./$')
             else
-                DIRS=$(\ls -d ${DIRPATH}.*/ | sed "s|^$DIRPATH||g" | \egrep -v '^\./$|^\.\./$')
+                DIRS=$(\ls -d ${DIRPATH}.*/ | sed "s|^$DIRPATH||g" | \grep -Ev '^\./$|^\.\./$')
             fi
         else
-            if [ -z "$DIRPATH" ]; then
+            if [[ -z $DIRPATH ]]; then
                 DIRS=$(\ls -d ${DIRPATH}*/ 2>/dev/null)
             else
                 DIRS=$(\ls -d ${DIRPATH}*/ 2>/dev/null | sed "s|^$DIRPATH||g")
             fi
         fi
-        X=$(echo "$DIRS" | \grep -i "$BASENAME" 2>/dev/null | sed 's|/$||g')
-        if [ -z "$X"  ]; then
-            X=$(echo "$DIRS" | \grep -i "$FILTER" 2>/dev/null | sed 's|/$||g')
-        fi
+        X=$(echo "$DIRS" | fzf --filter "$BASENAME" 2>/dev/null | sed 's|/$||g')
         # create array from X
         COMPREPLY=($X)
         # add DIRPATH as prefix
@@ -244,12 +238,13 @@ function timer_start {
 }
 
 function timer_stop {
-    local delta_us=$((($(timer_now) - $timer_start) / 1000))
-    local us=$((delta_us % 1000))
-    local ms=$(((delta_us / 1000) % 1000))
-    local s=$(((delta_us / 1000000) % 60))
-    local m=$(((delta_us / 60000000) % 60))
-    local h=$((delta_us / 3600000000))
+    local delta_us us ms s m h
+    delta_us=$((($(timer_now) - timer_start) / 1000))
+    us=$((delta_us % 1000))
+    ms=$(((delta_us / 1000) % 1000))
+    s=$(((delta_us / 1000000) % 60))
+    m=$(((delta_us / 60000000) % 60))
+    h=$((delta_us / 3600000000))
     # Goal: always show around 3 digits of accuracy
     if ((h > 0)); then timer_show=${h}h${m}m
     elif ((m > 0)); then timer_show=${m}m${s}s
@@ -268,23 +263,22 @@ function __makeTerminalTitle() {
 
     local CURRENT_DIR="${PWD/#$HOME/\~}"
 
-    if [ -n "${SSH_CONNECTION}" ]; then
-        title+="`hostname`:${CURRENT_DIR} [`whoami`@`hostname -f`]"
+    if [[ -n ${SSH_CONNECTION} ]]; then
+      title+="$(hostname):${CURRENT_DIR} [$(whoami)@$(hostname -f)]"
     else
-        title+="${CURRENT_DIR} [`whoami`]"
+        title+="${CURRENT_DIR} [$(whoami)]"
     fi
 
-    echo -en '\033]2;'${title}'\007'
+    echo -en '\033]2;'"${title}"'\007'
 }
 # "
 function __getMachineId() {
-    if [ -f /etc/machine-id ]; then
-        echo $((0x$(cat /etc/machine-id | head -c 15)))
+    if [[ -f /etc/machine-id ]]; then
+        echo $((0x$(head -c 15 /etc/machine-id)))
     else
         echo $(( (${#HOSTNAME}+0x$(hostid))))
     fi
 }
-
 
 
 function __makePS1() {
@@ -292,11 +286,12 @@ function __makePS1() {
 
     timer_stop
 
-    # write history immediatly
+    # write history immediately
     history -a
 
-    if [ ! -n "${HOST_COLOR}" ]; then
-        local H=$(__getMachineId)
+    if [[ -z ${HOST_COLOR} ]]; then
+        local H
+        H=$(__getMachineId)
         HOST_COLOR=$(tput setaf $((H%5 + 2))) # foreground
         #HOST_COLOR="\e[4$((H%5 + 2))m" # background
     fi
@@ -306,12 +301,12 @@ function __makePS1() {
     PS1+="\[${Yellow}\]${timer_show} "
     PS1+="${debian_chroot:+($debian_chroot)}"
 
-    if [ ${USER} == root ]; then
+    if [[ ${USER} == root ]]; then
         PS1+="\[${BRed}\]" # root
-    elif [ ${USER} != ${LNAME} ]; then
+    elif [[ ${USER} != "${LNAME}" ]]; then
         PS1+="\[${BBlue}\]" # normal user
     else
-        if [ -n "${SSH_CONNECTION}" ]; then
+        if [[ -n ${SSH_CONNECTION} ]]; then
             PS1+="\[${BGreen}\]" # normal user with ssh
         else
             PS1+="\[${Green}\]" # normal local user
@@ -319,8 +314,8 @@ function __makePS1() {
     fi
     PS1+="\u\[${Color_Off}\]"
 
-    if [ -n "${SSH_CONNECTION}" -o ${USER} == root ]; then
-        if [ ${USER} == root ]; then
+    if [[ -n ${SSH_CONNECTION} ]] || [[ ${USER} == root ]]; then
+        if [[ ${USER} == root ]]; then
             PS1+="\[${BRed}\]@\h\[${Color_Off}\]" # host displayed red when root
         else
             PS1+="\[${BGreen}\]@"
@@ -333,42 +328,28 @@ function __makePS1() {
  
     # python env
     if [[ -v VIRTUAL_ENV ]]; then
-      PS1+=" ${YELLOW}(${VIRTUAL_ENV##*/})${COLOR_OFF}"
+      PS1+=" ${Yellow}(${VIRTUAL_ENV##*/})${Color_Off}"
     fi
 
     # background jobs
-    local NO_JOBS=`jobs -p | wc -w`
-    if [ ${NO_JOBS} != 0 ]; then
+    local NO_JOBS
+    NO_JOBS=$(jobs -p | wc -w)
+    if [[ ${NO_JOBS} != 0 ]]; then
         PS1+=" \[${Green}\][j${NO_JOBS}]\[${Color_Off}\]"
     fi
 
-    # screen sessions I don't use screen
-    # local SCREEN_PATHS="/var/run/screens/S-`whoami` /var/run/screen/S-`whoami` /var/run/uscreens/S-`whoami`"
-
-    # for screen_path in ${SCREEN_PATHS}; do
-        # if [ -d ${screen_path} ]; then
-            # SCREEN_JOBS=`ls ${screen_path} | wc -w`
-            # if [ ${SCREEN_JOBS} != 0 ]; then
-                # local current_screen="$(echo ${STY} | cut -d '.' -f 1)"
-                # if [ -n "${current_screen}" ]; then
-                    # current_screen=":${current_screen}"
-                # fi
-                # PS1+=" \[${Green}\][s${SCREEN_JOBS}${current_screen}]\[${Color_Off}\]"
-            # fi
-            # break
-        # fi
-    # done
-
     # git branch
-    if [ $GIT_AVAILABLE -eq 1 ] && [ $GIT -eq 1 ]; then
+    if [[ $GIT_AVAILABLE -eq 1 ]] && [[ $GIT -eq 1 ]]; then
         # local branch="$(git name-rev --name-only HEAD 2>/dev/null)"
-        local branch="$(git branch 2>/dev/null | grep '^*' | colrm 1 2)"
+        local branch
+        branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
 
-        if [ -n "${branch}" ]; then
-            local git_status="$(git status --porcelain -b 2>/dev/null)"
-            local letters="$( echo "${git_status}" | grep --regexp=' \w ' | sed -e 's/^\s\?\(\w\)\s.*$/\1/' )"
-            local untracked="$( echo "${git_status}" | grep -F '?? ' | sed -e 's/^\?\(\?\)\s.*$/\1/' )"
-            local status_line="$( echo -e "${letters}\n${untracked}" | sort | uniq | tr -d '[:space:]' )"
+        if [[ -n ${branch} ]]; then
+            local git_status letters untracked status_line
+            git_status="$(git status --porcelain -b 2>/dev/null)"
+            letters="$( echo "${git_status}" | grep --regexp=' \w ' | sed -e 's/^\s\?\(\w\)\s.*$/\1/' )"
+            untracked="$( echo "${git_status}" | grep -F '?? ' | sed -e 's/^\?\(\?\)\s.*$/\1/' )"
+            status_line="$( echo -e "${letters}\n${untracked}" | sort | uniq | tr -d '[:space:]' )"
             PS1+=" \[${Cyan}\](${branch}"
             if [ -n "${status_line}" ]; then
                 PS1+=" ${status_line}"
@@ -378,15 +359,15 @@ function __makePS1() {
     fi
 
     # exit code
-    if [ ${EXIT} != 0 ]; then
+    if [[ ${EXIT} != 0 ]]; then
         PS1+=" \[${BRed}\][!${EXIT}]\[${Color_Off}\]"
     fi
 
     # prompt
     # PS1+=" \[${BPurple}\]\\$\[${Color_Off}\] " # prompt
-    if [ ${USER} == root ]; then
+    if [[ ${USER} == root ]]; then
         PS1+=" \[${BRed}\]\\$\[${Color_Off}\] " # root
-    elif [ ${USER} != ${LNAME} ]; then
+    elif [[ ${USER} != "${LNAME}" ]]; then
         PS1+=" \[${BBlue}\]\\$\[${Color_Off}\] " # normal user but not login
     else
         PS1+=" \[${BGreen}\]\\$\[${Color_Off}\] " # normal user
@@ -396,7 +377,7 @@ function __makePS1() {
     __makeTerminalTitle
 }
 
-if [ "$color_prompt" = yes ]; then
+if [[ $color_prompt = yes ]]; then
     if ! logname &>/dev/null; then
         LNAME=${USER}
     else
@@ -404,9 +385,9 @@ if [ "$color_prompt" = yes ]; then
     fi
     PROMPT_COMMAND=__makePS1
     # PS2="\[${BPurple}\]>\[${Color_Off}\] " # continuation prompt
-    if [ ${USER} == root ]; then
+    if [[ ${USER} == root ]]; then
         PS2=" \[${BRed}\]>\[${Color_Off}\] " # root
-    elif [ ${USER} != ${LNAME} ]; then
+    elif [[ ${USER} != "${LNAME}" ]]; then
         PS2=" \[${BBlue}\]>\[${Color_Off}\] " # normal user
     else
         PS2=" \[${BGreen}\]>\[${Color_Off}\] " # normal user
@@ -432,16 +413,16 @@ fi
 # You may want to put all your additions into a separate file like
 # ~/.bash_aliases, instead of adding them here directly.
 # See /usr/share/doc/bash-doc/examples in the bash-doc package.
-if [ -f ~/.bash_aliases ]; then
+if [[ -f ~/.bash_aliases ]]; then
     . ~/.bash_aliases
 fi
 
 # source bash_completion
-if [ -f /etc/bash_completion ]; then
+if [[ -f /etc/bash_completion ]]; then
     . /etc/bash_completion
 fi
 
-if [ -f /snap/lxd/current/etc/bash_completion.d/snap.lxd.lxc ]; then
+if [[ -f /snap/lxd/current/etc/bash_completion.d/snap.lxd.lxc ]]; then
     . /snap/lxd/current/etc/bash_completion.d/snap.lxd.lxc
 fi
 
@@ -455,12 +436,12 @@ export PAGER=less
 
 
 # set local bin in path
-if [ -d "$HOME/bin" ] ; then
+if [[ -d $HOME/bin ]] ; then
     PATH="$HOME/bin:$PATH"
 fi
 
 # remove duplicate entries
-PATH="$(perl -e 'print join(":", grep { not $seen{$_}++  } split(/:/, $ENV{PATH}))')"
+PATH="$(awk -v RS=: '!a[$1]++{if(NR>1)printf ":";printf $1}' <<< "$PATH")"
 
 # enable ssh-agent
 #if [ -z "$SSH_AUTH_SOCK" ] ; then
@@ -473,30 +454,30 @@ PATH="$(perl -e 'print join(":", grep { not $seen{$_}++  } split(/:/, $ENV{PATH}
 
 # Is loaded via vim
 IN_VIM=$(ps -p $PPID -o comm= | grep -qsE '[gn]?vim' && echo 1 || echo 0)
-if [ $IN_VIM -eq 1 ]; then
+if [[ $IN_VIM -eq 1 ]]; then
     GIT=0
     EN_TMUX=0
 fi
 
 # enable tmux and start session
-if [ $EN_TMUX -eq 1 ]; then
+if [[ $EN_TMUX -eq 1 ]]; then
     ## TMUX
     #if which tmux >/dev/null 2>&1; then
     #    #if not inside a tmux session, and if no session is started, start a new session
     #    test -z "$TMUX" && (tmux attach || tmux new-session)
     #fi
 
-    if [ -z "$TMUX" ]; then
+    if [[ -z $TMUX ]]; then
         # Create a new session if it doesn't exist
         tmux has-session -t $base_session || tmux new-session -d -s $base_session
         # Are there any clients connected already?
         client_cnt=$(tmux list-clients | wc -l)
-        if [ $client_cnt -ge 1 ]; then
+        if [[ $client_cnt -ge 1 ]]; then
             session_name=$base_session"-"$client_cnt
-            tmux new-session -d -t $base_session -s $session_name
-            tmux -2 attach-session -t $session_name \; set-option destroy-unattached
+            tmux new-session -d -t "$base_session" -s "$session_name"
+            tmux -2 attach-session -t "$session_name" \; set-option destroy-unattached
         else
-            if [ -f ~/.session.tmux ]; then
+            if [[ -f ~/.session.tmux ]]; then
                 tmux -2 attach-session -t $base_session \; source-file ~/.session.tmux
             else
                 tmux -2 attach-session -t $base_session
@@ -514,9 +495,9 @@ bind 'set colored-stats on'
 
 
 # enable fuzzy search
-if [ $EN_FUZZY -eq 1 ]; then
-    complete -o nospace -o filenames -o bashdefault -F _fuzzypath cd mkdir
-    complete -o nospace -o filenames -o bashdefault -F _fuzzyfiles ls cat less tail cp mv vi vim
+if [[ $EN_FUZZY -eq 1 ]]; then
+    complete -o nospace -o filenames -o bashdefault -F _fuzzypath cd mkdir rmdir du
+    complete -o nospace -o filenames -o bashdefault -F _fuzzyfiles ls cat less more tail head cp mv rm vi vim nvim grep find diff tar gzip scp rsync chmod chown ln
 fi
 
 
@@ -537,7 +518,7 @@ bind '"\e[B": history-search-forward'
 # CTRL-T - Paste the selected files and directories onto the command-line
 # CTRL-R - Paste the selected command from history onto the command-line
 # ALT-C - cd into the selected directory
-[ -f ~/.fzf.bash ] && source ~/.fzf.bash
+[[ -f ~/.fzf.bash ]] && source ~/.fzf.bash
 FZF_TMUX=$EN_TMUX
 FZF_TMUX_HEIGHT="20%"
 
@@ -545,8 +526,8 @@ FZF_TMUX_HEIGHT="20%"
 # https://github.com/sharkdp/fd
 command -v fd >/dev/null 2>&1 && export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'; export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 
-source ~/venv/3.12.3/bin/activate
+[[ -f ~/venv/3.12.3/bin/activate ]] && source ~/venv/3.12.3/bin/activate
 
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+[[ -s $NVM_DIR/nvm.sh ]] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[[ -s $NVM_DIR/bash_completion ]] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
