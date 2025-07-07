@@ -440,6 +440,10 @@ if [[ -d $HOME/bin ]] ; then
     PATH="$HOME/bin:$PATH"
 fi
 
+if [ -d "$HOME/go/bin/" ]; then
+    PATH="$HOME/go/bin/:$PATH"
+fi
+
 # remove duplicate entries
 PATH="$(awk -v RS=: '!a[$1]++{if(NR>1)printf ":";printf $1}' <<< "$PATH")"
 
