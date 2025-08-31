@@ -3,7 +3,7 @@
 P=$1
 DIR=$(dirname $(readlink -f $0))
 
-if [ -z $P ]; then
+if [ -z "$P" ]; then
     echo Copying files to homedir
     mv ~/.bashrc ~/.bashrc.bak
     mv ~/.bash_profile ~/.bash_profile.bak
@@ -26,13 +26,13 @@ if [ "$(expr match "$P" '.*\(:\)')" = ":" ]; then
     exit 1
 fi
 
-ssh $P "mv ~/.bashrc ~/.bashrc.bak;\
+ssh "$P" "mv ~/.bashrc ~/.bashrc.bak;\
 mv ~/.bash_profile ~/.bash_profile.bak;\
 mv ~/.bash_aliases ~/.bash_aliases.bak;\
 mv ~/.bash_logout ~/.bash_logout.bak;\
 mv ~/.dircolors ~/.dircolors.bak"
 
-sftp $P << EOF
+sftp "$P" << EOF
 put bashrc.sh       .bashrc
 put bash_profile.sh .bash_profile
 put bash_aliases.sh .bash_aliases
