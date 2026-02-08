@@ -389,35 +389,51 @@ function __makePS1() {
     if [[ $GIT_AVAILABLE -eq 1 && $GIT -eq 1 ]]; then
         # Are we inside a repo?
         if git rev-parse --is-inside-work-tree &>/dev/null; then
-            local git_status branch status letters
+            local git_status rest branch status letters mask=0
 
             # get branch + all file status in one command
             git_status=$(git status --porcelain -b 2>/dev/null)
 
+            # read all lines into an array
+            mapfile -t lines <<< "$git_status"
+
             # branch name from first line
-            IFS= read -r first_line <<< "$git_status"
+            first_line="${lines[0]}"
             branch="${first_line#'## '}"
             branch="${branch%%...*}"
 
             # letters: S=staged, M=modified, D=deleted, ?=untracked
-            letters=""
-            staged=0
-            modified=0
-            deleted=0
-            untracked=0
-            while IFS= read -r line; do
+            for line in "${lines[@]:1}"; do
                 [[ -z $line ]] && continue
                 c1="${line:0:1}"  # staged
                 c2="${line:1:1}"  # worktree
 
-                [[ $staged -eq 0 && $c1 =~ [AMDCR] ]] && { letters+="S"; staged=1; }
-                [[ $modified -eq 0 && $c2 == M ]] && { letters+="M"; modified=1; }
-                [[ $deleted -eq 0 && $c2 == D ]] && { letters+="D"; deleted=1; }
-                [[ $untracked -eq 0 && $line == '??'* ]] && { letters+="?"; untracked=1; }
+            # staged
+            if (( (mask & 1) == 0 )) && [[ $c1 =~ [AMDCR] ]]; then
+                letters+="S"
+                ((mask|=1))
+            fi
 
-                # early exit if all letters found
-                [[ $staged -eq 1 && $modified -eq 1 && $deleted -eq 1 && $untracked -eq 1 ]] && break
-            done <<< "${git_status#*$'\n'}"
+            # modified
+            if (( (mask & 2) == 0 )) && [[ $c2 == M ]]; then
+                letters+="M"
+                ((mask|=2))
+            fi
+
+            # deleted
+            if (( (mask & 4) == 0 )) && [[ $c2 == D ]]; then
+                letters+="D"
+                ((mask|=4))
+            fi
+
+            # untracked
+            if (( (mask & 8) == 0 )) && [[ $line == '??'* ]]; then
+                letters+="?"
+                ((mask|=8))
+            fi
+
+                (( mask == 15 )) && break  # all letters found
+            done
 
             # append to PS1
             PS1+=" \[${Cyan}\](${branch}"
