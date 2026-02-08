@@ -160,18 +160,21 @@ HOST_COLOR=${BGreen}
 
 
 function _fuzzyfiles()  {
+    [[ ${EN_FUZZY:-0} -eq 1 ]] || return 0
+
     local IFS=$'\n'
     local DIR DIRPATH BASENAME FILES X
 
     if [[ -z $2 ]]; then
         # No argument yet: list files and dirs in .
-        FILES=$(find . -maxdepth 1 -mindepth 1 ! -name '.*' -printf '%f\n' 2>/dev/null | sort -V)
+        FILES=$(find . -maxdepth 1 -mindepth 1 ! -name '.*' -printf '%f\n' 2>/dev/null |
+                sort -V)
         BASENAME=""
         DIRPATH=""
     else
         DIR="$2"
         if [[ $DIR =~ ^~ ]]; then
-            DIR="${2/\~/$HOME}"
+            DIR="${DIR/\~/$HOME}"
         fi
 
         # Split into directory path and basename
@@ -186,10 +189,12 @@ function _fuzzyfiles()  {
         # Decide whether to include dotfiles
         if [[ $BASENAME == .* ]]; then
             FILES=$(cd "$DIRPATH" 2>/dev/null && \
-                    find . -maxdepth 1 -mindepth 1 -name '.*' -printf '%f\n' 2>/dev/null)
+                    find . -maxdepth 1 -mindepth 1 -name '.*' -printf '%f\n' 2>/dev/null |
+                    sort -V)
         else
             FILES=$(cd "$DIRPATH" 2>/dev/null && \
-                    find . -maxdepth 1 -mindepth 1 ! -name '.*' -printf '%f\n' 2>/dev/null)
+                    find . -maxdepth 1 -mindepth 1 ! -name '.*' -printf '%f\n' 2>/dev/null |
+                    sort -V)
         fi
 
     fi
@@ -212,18 +217,21 @@ function _fuzzyfiles()  {
 }
 
 function _fuzzypath() {
+    [[ ${EN_FUZZY:-0} -eq 1 ]] || return 0
+
     local IFS=$'\n'
     local DIR DIRPATH BASENAME DIRS X
 
     if [[ -z $2 ]]; then
         # No argument yet: list non-hidden dirs in .
-        DIRS=$(find . -maxdepth 1 -mindepth 1 -type d ! -name '.*' -printf '%f\n' 2>/dev/null | sort -V)
+        DIRS=$(find . -maxdepth 1 -mindepth 1 -type d ! -name '.*' -printf '%f\n' 2>/dev/null |
+               sort -V)
         BASENAME=""
         DIRPATH=""
     else
         DIR="$2"
         if [[ $DIR =~ ^~ ]]; then
-            DIR="${2/\~/$HOME}"
+            DIR="${DIR/\~/$HOME}"
         fi
 
         # Split into directory path and basename
@@ -238,10 +246,12 @@ function _fuzzypath() {
         # If user’s basename starts with dot, include hidden dirs too
         if [[ $BASENAME == .* ]]; then
             DIRS=$(cd "$DIRPATH" 2>/dev/null && \
-                   find . -maxdepth 1 -mindepth 1 -type d -name '.*' -printf '%f\n' 2>/dev/null)
+                   find . -maxdepth 1 -mindepth 1 -type d -name '.*' -printf '%f\n' 2>/dev/null |
+                   sort -V)
         else
             DIRS=$(cd "$DIRPATH" 2>/dev/null && \
-                   find . -maxdepth 1 -mindepth 1 -type d ! -name '.*' -printf '%f\n' 2>/dev/null)
+                   find . -maxdepth 1 -mindepth 1 -type d ! -name '.*' -printf '%f\n' 2>/dev/null |
+                   sort -V)
         fi
     fi
 
@@ -263,19 +273,19 @@ function _fuzzypath() {
 }
 
 
-function timer_now {
+function timer_now() {
     date +%s%N
 }
 
 
-function timer_start {
-    timer_start=${timer_start:-$(timer_now)}
+function timer_start() {
+    timer_st=${timer_st:-$(timer_now)}
 }
 
 
-function timer_stop {
+function timer_stop() {
     local delta_us us ms s m h
-    delta_us=$((($(timer_now) - timer_start) / 1000))
+    delta_us=$((($(timer_now) - timer_st) / 1000))
     us=$((delta_us % 1000))
     ms=$(((delta_us / 1000) % 1000))
     s=$(((delta_us / 1000000) % 60))
@@ -290,7 +300,7 @@ function timer_stop {
     elif ((ms > 0)); then timer_show=${ms}.$((us / 100))ms
     else timer_show=${us}us
     fi
-    unset timer_start
+    unset timer_st
 }
 
 
@@ -305,7 +315,7 @@ function __makeTerminalTitle() {
         title+="${CURRENT_DIR} [$(whoami)]"
     fi
 
-    echo -en '\033]2;'"${title}"'\007'
+    printf '\033]2;%s\007' "$title"
 }
 
 
@@ -546,7 +556,10 @@ FZF_TMUX_HEIGHT="20%"
 
 # faster find
 # https://github.com/sharkdp/fd
-command -v fd >/dev/null 2>&1 && export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'; export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+if command -v fd >/dev/null 2>&1; then
+    export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
+    export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+fi
 
 [[ -f ~/venv/3.12.3/bin/activate ]] && source ~/venv/3.12.3/bin/activate
 
