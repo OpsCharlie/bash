@@ -4,14 +4,19 @@
 # export TERM=xterm-256color
 
 # enable/disable tmux loading
-[[ ${USER} = root ]] && EN_TMUX=0 || EN_TMUX=1
-command -v tmux &>/dev/null || EN_TMUX=0
+if [[ $EUID -eq 0 ]]; then
+    EN_TMUX=0
+elif command -v tmux >/dev/null 2>&1; then
+    EN_TMUX=1
+else
+    EN_TMUX=0
+fi
 
 # manual set tmux
 #EN_TMUX=0
 
 # is git available
-[[ -x $(command -v git 2>&1) ]] && GIT_AVAILABLE=1 || GIT_AVAILABLE=0
+command -v git &>/dev/null && GIT_AVAILABLE=1 || GIT_AVAILABLE=0
 
 # set base session and git when logged in via ssh
 if [[ -n $SSH_CLIENT ]] || [[ -n $SSH_TTY ]]; then
@@ -25,7 +30,7 @@ else
 fi
 
 # enable/disable fuzzy search
-EN_FUZZY=1
+command -v fzf &>/dev/null && EN_FUZZY=1 || EN_FUZZY=0
 
 # ~/.bashrc: executed by bash(1) for non-login shells.
 # If not running interactively, don't do anything
@@ -52,10 +57,6 @@ export HISTIGNORE="&:[ ]*:exit:ls:bg:fg:history:clear"
 # check the window size after each command and, if necessary,
 # update the values of LINES and COLUMNS.
 shopt -s checkwinsize
-
-# make less more friendly for non-text input files, see lesspipe(1)
-[[ -x /usr/bin/lesspipe ]] && eval "$(SHELL=/bin/sh lesspipe)"
-
 # set variable identifying the chroot you work in (used in the prompt below)
 if [[ -z ${debian_chroot} ]] && [[ -r /etc/debian_chroot ]]; then
     debian_chroot=$(cat /etc/debian_chroot)
@@ -160,65 +161,47 @@ HOST_COLOR=${BGreen}
 
 function _fuzzyfiles()  {
     local IFS=$'\n'
-    if [[ -z $2 ]]; then
-        mapfile -t COMPREPLY < <(\ls)
-    else
-        DIR="$2"
-        if [[ $DIR =~ ^~ ]]; then
-            DIR="${2/\~/$HOME}"
-        fi
-        DIRPATH=$(echo "$DIR" | sed 's|[^/]*$||' | sed 's|//|/|')
-        BASENAME="${DIR##*/}"
-        FILTER="${BASENAME//?/&.*}"
-        if [[ $BASENAME == .* ]]; then
-            FILES=$(\ls -A $DIRPATH 2>/dev/null)
-        else
-            FILES=$(\ls -A $DIRPATH 2>/dev/null | \grep -Ev '^\.')
-        fi
-        X=$(echo "$FILES" | fzf --filter "$BASENAME" 2>/dev/null)
-        # create array from X
-        mapfile -t COMPREPLY < <(echo "$X")
-        # add DIRPATH as prefix
-        COMPREPLY=("${COMPREPLY[@]/#/$DIRPATH}")
-    fi
-    # echo
-    # echo DIRPATH=$DIRPATH
-    # echo BASENAME=$BASENAME
-    # echo FILTER=$FILTER
-    # echo COMPREPLY=${COMPREPLY[@]}
-    # echo
-}
+    local DIR DIRPATH BASENAME FILES X
 
-function _fuzzypath() {
-    local IFS=$'\n'
     if [[ -z $2 ]]; then
-        mapfile -t COMPREPLY < <(\ls -d -- */ | sed 's|/$||')
+        # No argument yet: list files and dirs in .
+        FILES=$(find . -maxdepth 1 -mindepth 1 ! -name '.*' -printf '%f\n' 2>/dev/null | sort -V)
+        BASENAME=""
+        DIRPATH=""
     else
         DIR="$2"
         if [[ $DIR =~ ^~ ]]; then
             DIR="${2/\~/$HOME}"
         fi
-        DIRPATH=$(echo "$DIR" | sed 's|[^/]*$||' | sed 's|//|/|')
-        BASENAME=$(echo "$DIR" | sed 's|.*/||')
-        if [[ $BASENAME == .* ]]; then
-            if [ -z "$DIRPATH" ]; then
-                DIRS=$(\ls -d .*/ | \grep -Ev '^\./$|^\.\./$')
-            else
-                DIRS=$(\ls -d ${DIRPATH}.*/ | sed "s|^$DIRPATH||g" | \grep -Ev '^\./$|^\.\./$')
-            fi
+
+        # Split into directory path and basename
+        if [[ "$DIR" == */* ]]; then
+            DIRPATH="${DIR%/*}"
+            BASENAME="${DIR##*/}"
         else
-            if [[ -z $DIRPATH ]]; then
-                DIRS=$(\ls -d ${DIRPATH}*/ 2>/dev/null)
-            else
-                DIRS=$(\ls -d ${DIRPATH}*/ 2>/dev/null | sed "s|^$DIRPATH||g")
-            fi
+            DIRPATH="."
+            BASENAME="$DIR"
         fi
-        X=$(echo "$DIRS" | fzf --filter "$BASENAME" 2>/dev/null | sed 's|/$||g')
-        # create array from X
-        COMPREPLY=($X)
-        # add DIRPATH as prefix
-        COMPREPLY=("${COMPREPLY[@]/#/$DIRPATH}")
+
+        # Decide whether to include dotfiles
+        if [[ $BASENAME == .* ]]; then
+            FILES=$(cd "$DIRPATH" 2>/dev/null && \
+                    find . -maxdepth 1 -mindepth 1 -name '.*' -printf '%f\n' 2>/dev/null)
+        else
+            FILES=$(cd "$DIRPATH" 2>/dev/null && \
+                    find . -maxdepth 1 -mindepth 1 ! -name '.*' -printf '%f\n' 2>/dev/null)
+        fi
+
     fi
+    # Run through fzf using the typed basename as filter
+    X=$(printf '%s\n' "$FILES" | fzf --filter "$BASENAME" 2>/dev/null)
+    COMPREPLY=($X)
+
+    # Prepend directory path if needed (strip leading ./ first)
+    if [[ -n $DIRPATH && $DIRPATH != "." ]]; then
+        COMPREPLY=("${COMPREPLY[@]/#/$(printf '%s/' "$DIRPATH")}")
+    fi
+
     # echo
     # echo DIR=$DIR
     # echo DIRPATH=$DIRPATH
@@ -228,14 +211,67 @@ function _fuzzypath() {
     # echo
 }
 
+function _fuzzypath() {
+    local IFS=$'\n'
+    local DIR DIRPATH BASENAME DIRS X
+
+    if [[ -z $2 ]]; then
+        # No argument yet: list non-hidden dirs in .
+        DIRS=$(find . -maxdepth 1 -mindepth 1 -type d ! -name '.*' -printf '%f\n' 2>/dev/null | sort -V)
+        BASENAME=""
+        DIRPATH=""
+    else
+        DIR="$2"
+        if [[ $DIR =~ ^~ ]]; then
+            DIR="${2/\~/$HOME}"
+        fi
+
+        # Split into directory path and basename
+        if [[ "$DIR" == */* ]]; then
+            DIRPATH="${DIR%/*}"
+            BASENAME="${DIR##*/}"
+        else
+            DIRPATH="."
+            BASENAME="$DIR"
+        fi
+
+        # If user’s basename starts with dot, include hidden dirs too
+        if [[ $BASENAME == .* ]]; then
+            DIRS=$(cd "$DIRPATH" 2>/dev/null && \
+                   find . -maxdepth 1 -mindepth 1 -type d -name '.*' -printf '%f\n' 2>/dev/null)
+        else
+            DIRS=$(cd "$DIRPATH" 2>/dev/null && \
+                   find . -maxdepth 1 -mindepth 1 -type d ! -name '.*' -printf '%f\n' 2>/dev/null)
+        fi
+    fi
+
+    X=$(printf '%s\n' "$DIRS" | fzf --filter "$BASENAME" 2>/dev/null)
+    COMPREPLY=($X)
+    # add DIRPATH as prefix
+    if [[ -n $DIRPATH && $DIRPATH != "." ]]; then
+        COMPREPLY=("${COMPREPLY[@]/#/$(printf '%s/' "$DIRPATH")}")
+    fi
+
+    # echo
+    # echo DIR=$DIR
+    # echo DIRPATH=$DIRPATH
+    # echo BASENAME=$BASENAME
+    # echo FILTER=$FILTER
+    # echo X=$X
+    # echo COMPREPLY=${COMPREPLY[@]}
+    # echo
+}
+
 
 function timer_now {
     date +%s%N
 }
 
+
 function timer_start {
     timer_start=${timer_start:-$(timer_now)}
 }
+
 
 function timer_stop {
     local delta_us us ms s m h
@@ -271,12 +307,13 @@ function __makeTerminalTitle() {
 
     echo -en '\033]2;'"${title}"'\007'
 }
-# "
+
+
 function __getMachineId() {
     if [[ -f /etc/machine-id ]]; then
         echo $((0x$(head -c 15 /etc/machine-id)))
     else
-        echo $(( (${#HOSTNAME}+0x$(hostid))))
+        echo $(( ${#HOSTNAME}+0x$(hostid) ))
     fi
 }
 
@@ -347,9 +384,9 @@ function __makePS1() {
         if [[ -n ${branch} ]]; then
             local git_status letters untracked status_line
             git_status="$(git status --porcelain -b 2>/dev/null)"
-            letters="$( echo "${git_status}" | grep --regexp=' \w ' | sed -e 's/^\s\?\(\w\)\s.*$/\1/' )"
-            untracked="$( echo "${git_status}" | grep -F '?? ' | sed -e 's/^\?\(\?\)\s.*$/\1/' )"
-            status_line="$( echo -e "${letters}\n${untracked}" | sort | uniq | tr -d '[:space:]' )"
+            letters="$(grep -oP ' \K\w(?= )' <<< "${git_status}")"
+            untracked="$(grep -oP '^\?\?\s' <<< "${git_status}" | tr -d '?[:space:]')"
+            status_line="$(printf '%s\n%s' "${letters}" "${untracked}" | sort -u | tr -d '[:space:]')"
             PS1+=" \[${Cyan}\](${branch}"
             if [ -n "${status_line}" ]; then
                 PS1+=" ${status_line}"
@@ -378,10 +415,8 @@ function __makePS1() {
 }
 
 if [[ $color_prompt = yes ]]; then
-    if ! logname &>/dev/null; then
-        LNAME=${USER}
-    else
-        LNAME=$(logname)
+    if ! LNAME=$(logname 2>/dev/null); then
+        LNAME=$USER
     fi
     PROMPT_COMMAND=__makePS1
     # PS2="\[${BPurple}\]>\[${Color_Off}\] " # continuation prompt
@@ -401,12 +436,6 @@ unset color_prompt force_color_prompt
 # enable color support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
     test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
-    alias dir='dir --color=auto'
-    alias vdir='vdir --color=auto'
-
-    alias grep='grep --color=auto'
-    alias fgrep='fgrep --color=auto'
-    alias egrep='egrep --color=auto'
 fi
 
 # Alias definitions.
@@ -465,12 +494,6 @@ fi
 
 # enable tmux and start session
 if [[ $EN_TMUX -eq 1 ]]; then
-    ## TMUX
-    #if which tmux >/dev/null 2>&1; then
-    #    #if not inside a tmux session, and if no session is started, start a new session
-    #    test -z "$TMUX" && (tmux attach || tmux new-session)
-    #fi
-
     if [[ -z $TMUX ]]; then
         # Create a new session if it doesn't exist
         tmux has-session -t $base_session || tmux new-session -d -s $base_session
@@ -496,21 +519,16 @@ bind 'TAB:menu-complete'
 bind '"\e[Z": menu-complete-backward'
 bind 'set colored-completion-prefix on'
 bind 'set colored-stats on'
-
+bind 'set completion-ignore-case on'
+# search history with arrow keys
+bind '"\e[A": history-search-backward'
+bind '"\e[B": history-search-forward'
 
 # enable fuzzy search
 if [[ $EN_FUZZY -eq 1 ]]; then
     complete -o nosort -o nospace -o filenames -o bashdefault -F _fuzzypath cd mkdir rmdir du
     complete -o nosort -o nospace -o filenames -o bashdefault -F _fuzzyfiles ls cat less more tail head cp mv rm vi vim nvim grep find diff tar gzip scp rsync chmod chown ln
 fi
-
-
-# tab completion case insensitive
-bind 'set completion-ignore-case on'
-
-# search history with arrow keys
-bind '"\e[A": history-search-backward'
-bind '"\e[B": history-search-forward'
 
 
 # https://github.com/dvorka/hstr
