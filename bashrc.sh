@@ -389,32 +389,40 @@ function __makePS1() {
     if [[ $GIT_AVAILABLE -eq 1 && $GIT -eq 1 ]]; then
         # Are we inside a repo?
         if git rev-parse --is-inside-work-tree &>/dev/null; then
-            local branch status=""
+            local git_status branch status letters
 
-            # Branch (very fast)
-            branch="$(git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEAD 2>/dev/null)"
+            # get branch + all file status in one command
+            git_status=$(git status --porcelain -b 2>/dev/null)
 
-            if [[ -n $branch ]]; then
-                # Staged changes
-                git diff --cached --quiet 2>/dev/null || status+="S"
+            # branch name from first line
+            IFS= read -r first_line <<< "$git_status"
+            branch="${first_line#'## '}"
+            branch="${branch%%...*}"
 
-                # Working tree changes
-                git diff --quiet 2>/dev/null || status+="M"
+            # letters: S=staged, M=modified, D=deleted, ?=untracked
+            letters=""
+            staged=0
+            modified=0
+            deleted=0
+            untracked=0
+            while IFS= read -r line; do
+                [[ -z $line ]] && continue
+                c1="${line:0:1}"  # staged
+                c2="${line:1:1}"  # worktree
 
-                # Deleted files in working tree
-                if [[ ! -z $(git diff --name-only --diff-filter=D 2>/dev/null) ]]; then
-                    status+="D"
-                fi
+                [[ $staged -eq 0 && $c1 =~ [AMDCR] ]] && { letters+="S"; staged=1; }
+                [[ $modified -eq 0 && $c2 == M ]] && { letters+="M"; modified=1; }
+                [[ $deleted -eq 0 && $c2 == D ]] && { letters+="D"; deleted=1; }
+                [[ $untracked -eq 0 && $line == '??'* ]] && { letters+="?"; untracked=1; }
 
-                # Untracked files (fast path)
-                if [[ ! -z $(git ls-files --others --exclude-standard --directory 2>/dev/null) ]]; then
-                    status+="?"
-                fi
+                # early exit if all letters found
+                [[ $staged -eq 1 && $modified -eq 1 && $deleted -eq 1 && $untracked -eq 1 ]] && break
+            done <<< "${git_status#*$'\n'}"
 
-                PS1+=" \[${Cyan}\](${branch}"
-                [[ -n $status ]] && PS1+=" ${status}"
-                PS1+=")\[${Color_Off}\]"
-            fi
+            # append to PS1
+            PS1+=" \[${Cyan}\](${branch}"
+            [[ -n $letters ]] && PS1+=" ${letters}"
+            PS1+=")\[${Color_Off}\]"
         fi
     fi
 
