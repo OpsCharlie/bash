@@ -161,15 +161,15 @@ HOST_COLOR=${BGreen}
 function _fuzzyfiles()  {
     local IFS=$'\n'
     if [[ -z $2 ]]; then
-        COMPREPLY=( $(\ls) )
+        mapfile -t COMPREPLY < <(\ls)
     else
         DIR="$2"
         if [[ $DIR =~ ^~ ]]; then
             DIR="${2/\~/$HOME}"
         fi
         DIRPATH=$(echo "$DIR" | sed 's|[^/]*$||' | sed 's|//|/|')
-        BASENAME=$(echo "$DIR" | sed 's|.*/||')
-        FILTER=$(echo "$BASENAME" | sed 's|.|\0.*|g')
+        BASENAME="${DIR##*/}"
+        FILTER="${BASENAME//?/&.*}"
         if [[ $BASENAME == .* ]]; then
             FILES=$(\ls -A $DIRPATH 2>/dev/null)
         else
@@ -177,7 +177,7 @@ function _fuzzyfiles()  {
         fi
         X=$(echo "$FILES" | fzf --filter "$BASENAME" 2>/dev/null)
         # create array from X
-        COMPREPLY=($X)
+        mapfile -t COMPREPLY < <(echo "$X")
         # add DIRPATH as prefix
         COMPREPLY=("${COMPREPLY[@]/#/$DIRPATH}")
     fi
@@ -192,7 +192,7 @@ function _fuzzyfiles()  {
 function _fuzzypath() {
     local IFS=$'\n'
     if [[ -z $2 ]]; then
-        COMPREPLY=( $(\ls -d */ | sed 's|/$||') )
+        mapfile -t COMPREPLY < <(\ls -d -- */ | sed 's|/$||')
     else
         DIR="$2"
         if [[ $DIR =~ ^~ ]]; then
@@ -500,8 +500,8 @@ bind 'set colored-stats on'
 
 # enable fuzzy search
 if [[ $EN_FUZZY -eq 1 ]]; then
-    complete -o nospace -o filenames -o bashdefault -F _fuzzypath cd mkdir rmdir du
-    complete -o nospace -o filenames -o bashdefault -F _fuzzyfiles ls cat less more tail head cp mv rm vi vim nvim grep find diff tar gzip scp rsync chmod chown ln
+    complete -o nosort -o nospace -o filenames -o bashdefault -F _fuzzypath cd mkdir rmdir du
+    complete -o nosort -o nospace -o filenames -o bashdefault -F _fuzzyfiles ls cat less more tail head cp mv rm vi vim nvim grep find diff tar gzip scp rsync chmod chown ln
 fi
 
 
