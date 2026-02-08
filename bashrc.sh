@@ -278,6 +278,7 @@ function timer_now() {
 
 
 function timer_start() {
+    [[ $COMP_LINE ]] && return
     timer_st=${timer_st:-$(timer_now)}
 }
 
@@ -385,22 +386,35 @@ function __makePS1() {
     fi
 
     # git branch
-    if [[ $GIT_AVAILABLE -eq 1 ]] && [[ $GIT -eq 1 ]]; then
-        # local branch="$(git name-rev --name-only HEAD 2>/dev/null)"
-        local branch
-        branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
+    if [[ $GIT_AVAILABLE -eq 1 && $GIT -eq 1 ]]; then
+        # Are we inside a repo?
+        if git rev-parse --is-inside-work-tree &>/dev/null; then
+            local branch status=""
 
-        if [[ -n ${branch} ]]; then
-            local git_status letters untracked status_line
-            git_status="$(git status --porcelain -b 2>/dev/null)"
-            letters="$(grep -oP ' \K\w(?= )' <<< "${git_status}")"
-            untracked="$(grep -oP '^\?\?\s' <<< "${git_status}" | tr -d '?[:space:]')"
-            status_line="$(printf '%s\n%s' "${letters}" "${untracked}" | sort -u | tr -d '[:space:]')"
-            PS1+=" \[${Cyan}\](${branch}"
-            if [ -n "${status_line}" ]; then
-                PS1+=" ${status_line}"
+            # Branch (very fast)
+            branch="$(git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEAD 2>/dev/null)"
+
+            if [[ -n $branch ]]; then
+                # Staged changes
+                git diff --cached --quiet 2>/dev/null || status+="S"
+
+                # Working tree changes
+                git diff --quiet 2>/dev/null || status+="M"
+
+                # Deleted files in working tree
+                if [[ ! -z $(git diff --name-only --diff-filter=D 2>/dev/null) ]]; then
+                    status+="D"
+                fi
+
+                # Untracked files (fast path)
+                if [[ ! -z $(git ls-files --others --exclude-standard --directory 2>/dev/null) ]]; then
+                    status+="?"
+                fi
+
+                PS1+=" \[${Cyan}\](${branch}"
+                [[ -n $status ]] && PS1+=" ${status}"
+                PS1+=")\[${Color_Off}\]"
             fi
-            PS1+=")\[${Color_Off}\]"
         fi
     fi
 
