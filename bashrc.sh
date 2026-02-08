@@ -408,29 +408,29 @@ function __makePS1() {
                 c1="${line:0:1}"  # staged
                 c2="${line:1:1}"  # worktree
 
-            # staged
-            if (( (mask & 1) == 0 )) && [[ $c1 =~ [AMDCR] ]]; then
-                letters+="S"
-                ((mask|=1))
-            fi
+                # staged
+                if (( (mask & 1) == 0 )) && [[ $c1 =~ [AMDCR] ]]; then
+                    letters+="S"
+                    ((mask|=1))
+                fi
 
-            # modified
-            if (( (mask & 2) == 0 )) && [[ $c2 == M ]]; then
-                letters+="M"
-                ((mask|=2))
-            fi
+                # modified
+                if (( (mask & 2) == 0 )) && [[ $c2 == M ]]; then
+                    letters+="M"
+                    ((mask|=2))
+                fi
 
-            # deleted
-            if (( (mask & 4) == 0 )) && [[ $c2 == D ]]; then
-                letters+="D"
-                ((mask|=4))
-            fi
+                # deleted
+                if (( (mask & 4) == 0 )) && [[ $c2 == D ]]; then
+                    letters+="D"
+                    ((mask|=4))
+                fi
 
-            # untracked
-            if (( (mask & 8) == 0 )) && [[ $line == '??'* ]]; then
-                letters+="?"
-                ((mask|=8))
-            fi
+                # untracked
+                if (( (mask & 8) == 0 )) && [[ $line == '??'* ]]; then
+                    letters+="?"
+                    ((mask|=8))
+                fi
 
                 (( mask == 15 )) && break  # all letters found
             done
