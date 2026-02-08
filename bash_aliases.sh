@@ -6,6 +6,12 @@ alias ls='ls $__LS_OPTIONS'
 alias ll='ls $__LS_OPTIONS -l'
 alias la='ls $__LS_OPTIONS -la'
 alias l='ls $__LS_OPTIONS -CF'
+alias dir='dir $__LS_OPTIONS'
+alias vdir='vdir $__LS_OPTIONS'
+alias grep='grep --color=auto'
+alias fgrep='fgrep --color=auto'
+alias egrep='egrep --color=auto'
+
 alias sudo='sudo '   # use aliases when using sudo
 
 alias cd..='cd ..'
