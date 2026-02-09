@@ -166,7 +166,7 @@ function _fuzzyfiles()  {
 
     if [[ -z $2 ]]; then
         # No argument yet: list files and dirs in .
-        FILES=$(find . -maxdepth 1 -mindepth 1 ! -name '.*' -printf '%f\n' 2>/dev/null |
+        FILES=$(find -L . -maxdepth 1 -mindepth 1 ! -name '.*' -printf '%f\n' 2>/dev/null |
                 sort -V)
         BASENAME=""
         DIRPATH=""
@@ -188,12 +188,10 @@ function _fuzzyfiles()  {
         # Decide whether to include dotfiles
         if [[ $BASENAME == .* ]]; then
             FILES=$(cd "$DIRPATH" 2>/dev/null && \
-                    find . -maxdepth 1 -mindepth 1 -name '.*' -printf '%f\n' 2>/dev/null |
-                    sort -V)
+                    find -L . -maxdepth 1 -mindepth 1 -name '.*' -printf '%f\n' 2>/dev/null)
         else
             FILES=$(cd "$DIRPATH" 2>/dev/null && \
-                    find . -maxdepth 1 -mindepth 1 ! -name '.*' -printf '%f\n' 2>/dev/null |
-                    sort -V)
+                    find -L . -maxdepth 1 -mindepth 1 ! -name '.*' -printf '%f\n' 2>/dev/null)
         fi
 
     fi
@@ -223,7 +221,7 @@ function _fuzzypath() {
 
     if [[ -z $2 ]]; then
         # No argument yet: list non-hidden dirs in .
-        DIRS=$(find . -maxdepth 1 -mindepth 1 -type d ! -name '.*' -printf '%f\n' 2>/dev/null |
+        DIRS=$(find -L . -maxdepth 1 -mindepth 1 -type d ! -name '.*' -printf '%f\n' 2>/dev/null |
                sort -V)
         BASENAME=""
         DIRPATH=""
@@ -245,12 +243,10 @@ function _fuzzypath() {
         # If user’s basename starts with dot, include hidden dirs too
         if [[ $BASENAME == .* ]]; then
             DIRS=$(cd "$DIRPATH" 2>/dev/null && \
-                   find . -maxdepth 1 -mindepth 1 -type d -name '.*' -printf '%f\n' 2>/dev/null |
-                   sort -V)
+                   find -L . -maxdepth 1 -mindepth 1 -type d -name '.*' -printf '%f\n' 2>/dev/null)
         else
             DIRS=$(cd "$DIRPATH" 2>/dev/null && \
-                   find . -maxdepth 1 -mindepth 1 -type d ! -name '.*' -printf '%f\n' 2>/dev/null |
-                   sort -V)
+              find -L . -maxdepth 1 -mindepth 1 -type d ! -name '.*' -printf '%f\n' 2>/dev/null)
         fi
     fi
 
