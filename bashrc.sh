@@ -505,18 +505,6 @@ export EDITOR=vim
 export PAGER=less
 
 
-# set local bin in path
-if [[ -d $HOME/bin ]] ; then
-    PATH="$HOME/bin:$PATH"
-fi
-
-if [ -d "$HOME/go/bin/" ]; then
-    PATH="$HOME/go/bin/:$PATH"
-fi
-
-# remove duplicate entries
-PATH="$(awk -v RS=: '!a[$1]++{if(NR>1)printf ":";printf $1}' <<< "$PATH")"
-
 # enable ssh-agent
 #if [ -z "$SSH_AUTH_SOCK" ] ; then
 #    eval `ssh-agent -s`
@@ -592,8 +580,30 @@ if command -v fd >/dev/null 2>&1; then
     export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 fi
 
-[[ -f ~/venv/3.12.3/bin/activate ]] && source ~/venv/3.12.3/bin/activate
+# Auto-activate latest Python virtual environment
+if [[ -d ~/venv ]]; then
+    # Find and activate the latest Python venv
+    for venv_dir in $(find ~/venv -maxdepth 1 -type d -name '[0-9]*' -printf '%f\n' 2>/dev/null | sort -V -r); do
+        if [[ -f ~/venv/$venv_dir/bin/activate ]]; then
+            source ~/venv/"$venv_dir"/bin/activate
+            break
+        fi
+    done
+fi
 
 export NVM_DIR="$HOME/.nvm"
 [[ -s $NVM_DIR/nvm.sh ]] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [[ -s $NVM_DIR/bash_completion ]] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+[[ -f $HOME/.cargo/env ]] && \. "$HOME/.cargo/env"
+
+if [ -d "$HOME/go/bin/" ]; then
+    PATH="$HOME/go/bin/:$PATH"
+fi
+
+if [[ -d $HOME/bin ]] ; then
+    PATH="$HOME/bin:$PATH"
+fi
+
+# remove duplicate entries
+PATH="$(awk -v RS=: '!a[$1]++{if(NR>1)printf ":";printf $1}' <<< "$PATH")"
