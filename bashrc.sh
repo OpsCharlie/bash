@@ -208,7 +208,6 @@ function _fuzzyfiles()  {
     # echo DIR=$DIR
     # echo DIRPATH=$DIRPATH
     # echo BASENAME=$BASENAME
-    # echo FILTER=$FILTER
     # echo COMPREPLY=${COMPREPLY[@]}
     # echo
 }
@@ -261,7 +260,6 @@ function _fuzzypath() {
     # echo DIR=$DIR
     # echo DIRPATH=$DIRPATH
     # echo BASENAME=$BASENAME
-    # echo FILTER=$FILTER
     # echo X=$X
     # echo COMPREPLY=${COMPREPLY[@]}
     # echo
