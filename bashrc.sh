@@ -607,3 +607,4 @@ fi
 
 # remove duplicate entries
 PATH="$(awk -v RS=: '!a[$1]++{if(NR>1)printf ":";printf $1}' <<< "$PATH")"
+export PATH
