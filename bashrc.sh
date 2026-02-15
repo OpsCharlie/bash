@@ -133,7 +133,7 @@ function __makeTerminalTitle() {
   if [[ -n ${SSH_CONNECTION} ]]; then
     title+="$(hostname):${CURRENT_DIR} [$(whoami)@$(hostname -f)]"
   else
-    title+="${CURRENT_DIR} [$(whoami)]"
+    title+="${CURRENT_DIR} [${USER}]"
   fi
 
   printf '\033]2;%s\007' "$title"
@@ -189,8 +189,8 @@ function __makePS1() {
     fi
   fi
 
-  # PS1+=":\[${BBlue}\]\w" # working directory
-  PS1+=":\[\033[38;5;111m\]\w" # working directory
+  PS1+=":\[${IBlue}\]\w" # working directory
+  # PS1+=":\[\033[38;5;111m\]\w" # working directory
 
   # python env
   if [[ -v VIRTUAL_ENV ]]; then
