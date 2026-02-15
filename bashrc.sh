@@ -1,10 +1,10 @@
-# shellcheck disable=SC2034
+# shellcheck disable=SC2034,SC1091,SC1090
 
 # ~/.bashrc: executed by bash(1) for non-login shells.
 # If not running interactively, don't do anything
 case $- in
-*i*) ;;
-*) return ;;
+  *i*) ;;
+  *) return ;;
 esac
 
 function __fzf_complete() {
@@ -127,7 +127,7 @@ function timer_stop() {
   elif ((s >= 10)); then
     timer_show=${s}.$((ms / 100))s
   elif ((s > 0)); then
-    timer_show=${s}.$(printf %03d $ms)s
+    timer_show=${s}.$(printf %03d "$ms")s
   elif ((ms >= 100)); then
     timer_show=${ms}ms
   elif ((ms > 0)); then
@@ -182,7 +182,7 @@ function __makePS1() {
 
   if [[ ${USER} == root ]]; then
     PS1+="\[${BRed}\]" # root
-  elif [[ ${USER} != "${LNAME}" ]]; then
+  elif [[ ${USER} != "$LNAME" ]]; then
     PS1+="\[${BBlue}\]" # normal user
   else
     if [[ -n ${SSH_CONNECTION} ]]; then
@@ -283,7 +283,7 @@ function __makePS1() {
   # PS1+=" \[${BPurple}\]\\$\[${Color_Off}\] " # prompt
   if [[ ${USER} == root ]]; then
     PS1+=" \[${BRed}\]\\$\[${Color_Off}\] " # root
-  elif [[ ${USER} != "${LNAME}" ]]; then
+  elif [[ ${USER} != "$LNAME" ]]; then
     PS1+=" \[${BBlue}\]\\$\[${Color_Off}\] " # normal user but not login
   else
     PS1+=" \[${BGreen}\]\\$\[${Color_Off}\] " # normal user
@@ -406,11 +406,10 @@ fi
 # CTRL-T - Paste the selected files and directories onto the command-line
 # CTRL-R - Paste the selected command from history onto the command-line
 # ALT-C - cd into the selected directory
-# shellcheck source=/dev/null
 [[ -f ~/.fzf.bash ]] && source ~/.fzf.bash
 command -v fzf &>/dev/null && EN_FUZZY=1 || EN_FUZZY=0
-FZF_TMUX=$EN_TMUX
-FZF_TMUX_HEIGHT="20%"
+# FZF_TMUX=$EN_TMUX
+# FZF_TMUX_HEIGHT="20%"
 
 # don't put duplicate lines in the history. See bash(1) for more options
 # ... or force ignoredups and ignorespace
@@ -437,7 +436,7 @@ if [[ $color_prompt = yes ]]; then
   # PS2="\[${BPurple}\]>\[${Color_Off}\] " # continuation prompt
   if [[ ${USER} == root ]]; then
     PS2=" \[${BRed}\]>\[${Color_Off}\] " # root
-  elif [[ ${USER} != "${LNAME}" ]]; then
+  elif [[ ${USER} != "$LNAME" ]]; then
     PS2=" \[${BBlue}\]>\[${Color_Off}\] " # normal user
   else
     PS2=" \[${BGreen}\]>\[${Color_Off}\] " # normal user
@@ -453,13 +452,10 @@ if [ -x /usr/bin/dircolors ]; then
   test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
 fi
 
-# Alias definitions.
-# shellcheck source=/dev/null
 if [[ -f ~/.bash_aliases ]]; then
   source ~/.bash_aliases
 fi
 
-# source bash_completion
 if [[ -f /etc/bash_completion ]]; then
   source /etc/bash_completion
 fi
@@ -468,27 +464,18 @@ if [[ -f /snap/lxd/current/etc/bash_completion.d/snap.lxd.lxc ]]; then
   source /snap/lxd/current/etc/bash_completion.d/snap.lxd.lxc
 fi
 
-# trap every command
-trap 'timer_start' DEBUG
-
-umask 022
-
-export EDITOR=vim
-export PAGER=less
+if [[ -f ~/.tmux/tmux_completion.sh ]]; then
+  source ~/.tmux/tmux_completion.sh
+fi
 
 # enable ssh-agent
 #if [ -z "$SSH_AUTH_SOCK" ] ; then
 #    eval `ssh-agent -s`
 #fi
 
-# TMUX completion
-# shellcheck source=/dev/null
-if [[ -f ~/.tmux/tmux_completion.sh ]]; then
-  source ~/.tmux/tmux_completion.sh
-fi
 
 # Is loaded via vim
-IN_VIM=$(ps -p $PPID -o comm= | grep -qsE '[gn]?vim' && echo 1 || echo 0)
+IN_VIM=$(ps -p "$PPID" -o comm= | grep -qsE '[gn]?vim' && echo 1 || echo 0)
 if [[ $IN_VIM -eq 1 ]]; then
   GIT=0
   EN_TMUX=0
@@ -498,7 +485,7 @@ fi
 if [[ $EN_TMUX -eq 1 ]]; then
   if [[ -z $TMUX ]]; then
     # Create a new session if it doesn't exist
-    tmux has-session -t $base_session || tmux new-session -d -s $base_session
+    tmux has-session -t "$base_session" || tmux new-session -d -s "$base_session"
     # Are there any clients connected already?
     client_cnt=$(tmux list-clients | wc -l)
     if [[ $client_cnt -ge 1 ]]; then
@@ -507,9 +494,9 @@ if [[ $EN_TMUX -eq 1 ]]; then
       tmux -2 attach-session -t "$session_name" \; set-option destroy-unattached
     else
       if [[ -f ~/.session.tmux ]]; then
-        tmux -2 attach-session -t $base_session \; source-file ~/.session.tmux
+        tmux -2 attach-session -t "$base_session" \; source-file ~/.session.tmux
       else
-        tmux -2 attach-session -t $base_session
+        tmux -2 attach-session -t "$base_session"
       fi
     fi
   fi
@@ -549,7 +536,6 @@ if [[ -d ~/venv ]]; then
   # Find and activate the latest Python venv
   for venv_dir in $(find ~/venv -maxdepth 1 -type d -name '[0-9]*' -printf '%f\n' 2>/dev/null | sort -V -r); do
     if [[ -f ~/venv/$venv_dir/bin/activate ]]; then
-      # shellcheck source=/dev/null
       source ~/venv/"$venv_dir"/bin/activate
       break
     fi
@@ -557,10 +543,10 @@ if [[ -d ~/venv ]]; then
 fi
 
 export NVM_DIR="$HOME/.nvm"
-[[ -s $NVM_DIR/nvm.sh ]] && \. "$NVM_DIR/nvm.sh"                   # This loads nvm
-[[ -s $NVM_DIR/bash_completion ]] && \. "$NVM_DIR/bash_completion" # This loads nvm bash_completion
+[[ -s $NVM_DIR/nvm.sh ]] && source "$NVM_DIR/nvm.sh"                   # This loads nvm
+[[ -s $NVM_DIR/bash_completion ]] && source "$NVM_DIR/bash_completion" # This loads nvm bash_completion
 
-[[ -f $HOME/.cargo/env ]] && \. "$HOME/.cargo/env"
+[[ -f $HOME/.cargo/env ]] && source "$HOME/.cargo/env"
 
 if [ -d "$HOME/go/bin/" ]; then
   PATH="$HOME/go/bin/:$PATH"
@@ -573,3 +559,9 @@ fi
 # remove duplicate entries
 PATH="$(awk -v RS=: '!a[$1]++{if(NR>1)printf ":";printf $1}' <<<"$PATH")"
 export PATH
+export EDITOR=vim
+export PAGER=less
+
+# trap every command
+trap 'timer_start' DEBUG
+umask 022
