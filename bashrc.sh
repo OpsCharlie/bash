@@ -38,36 +38,23 @@ function __fzf_complete() {
   # ensure dirpath exists
   [[ ! -d "$dirpath" ]] && return 0
 
-  local items
-  if command -v fd &>/dev/null; then
-    local -a fd_opts
-    fd_opts=(--max-depth 1 --follow)
-    if [[ "$comp_type" == "dir" ]]; then
-      fd_opts+=(--type d)
-    fi
-    if [[ $basename == .* ]]; then
-      fd_opts+=(--hidden)
-    fi
-    items=$(cd "$dirpath" 2>/dev/null && command fd "${fd_opts[@]}" 2>/dev/null)
-  else
-    local -a find_args
-    find_args=(-L . -maxdepth 1 -mindepth 1)
+  local -a find_args
+  find_args=(-L . -maxdepth 1 -mindepth 1)
 
-    if [[ "$comp_type" == "dir" ]]; then
-      find_args+=(-type d)
-    fi
-
-    if [[ $basename == .* ]]; then
-      find_args+=(-name '.*')
-    else
-      find_args+=('!' -name '.*')
-    fi
-    items=$(cd "$dirpath" 2>/dev/null && command find "${find_args[@]}" -printf '%f\n' 2>/dev/null | sort -V)
+  if [[ "$comp_type" == "dir" ]]; then
+    find_args+=(-type d)
   fi
+
+  if [[ $basename == .* ]]; then
+    find_args+=(-name '.*')
+  else
+    find_args+=('!' -name '.*')
+  fi
+  items=$(builtin cd "$dirpath" 2>/dev/null && command find "${find_args[@]}" -printf '%f\n' 2>/dev/null)
 
   [[ -z $items ]] && return 0
 
-  choice=$(printf '%s\n' "$items" | fzf --filter "$basename" --height "20%" --reverse --multi 2>/dev/null)
+  choice=$(printf '%s\n' "$items" | fzf --filter "$basename" 2>/dev/null)
   [[ -z $choice ]] && return 0
 
   local -a replies
@@ -473,7 +460,6 @@ fi
 #    eval `ssh-agent -s`
 #fi
 
-
 # Is loaded via vim
 IN_VIM=$(ps -p "$PPID" -o comm= | grep -qsE '[gn]?vim' && echo 1 || echo 0)
 if [[ $IN_VIM -eq 1 ]]; then
@@ -526,9 +512,9 @@ fi
 
 # faster find
 # https://github.com/sharkdp/fd
-if command -v fd >/dev/null 2>&1; then
-  export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
-  export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+ if command -v fd >/dev/null 2>&1; then
+ 	export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
+ 	export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 fi
 
 # Auto-activate latest Python virtual environment
