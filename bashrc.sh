@@ -1,36 +1,5 @@
 # shellcheck disable=SC2034
 
-# export TERM=xterm-256color
-
-# enable/disable tmux loading
-if [[ $EUID -eq 0 ]]; then
-    EN_TMUX=0
-elif command -v tmux >/dev/null 2>&1; then
-    EN_TMUX=1
-else
-    EN_TMUX=0
-fi
-
-# manual set tmux
-#EN_TMUX=0
-
-# is git available
-command -v git &>/dev/null && GIT_AVAILABLE=1 || GIT_AVAILABLE=0
-
-# set base session and git when logged in via ssh
-if [[ -n $SSH_CLIENT ]] || [[ -n $SSH_TTY ]]; then
-    base_session='C-b'
-    GIT=0
-else
-    base_session='C-a'
-    # if tmux is enabled, disable git prompt. tmux will show git.
-    # [[ $EN_TMUX -eq "1" ]] && GIT=0 || GIT=1
-    GIT=1
-fi
-
-# enable/disable fuzzy search
-command -v fzf &>/dev/null && EN_FUZZY=1 || EN_FUZZY=0
-
 # ~/.bashrc: executed by bash(1) for non-login shells.
 # If not running interactively, don't do anything
 case $- in
@@ -38,231 +7,103 @@ case $- in
       *) return;;
 esac
 
-# don't put duplicate lines in the history. See bash(1) for more options
-# ... or force ignoredups and ignorespace
-HISTCONTROL=ignoredups:ignorespace
-export HISTTIMEFORMAT="| %d.%m.%y %T =>  "
-
-# append to the history file, don't overwrite it
-shopt -s histappend
-
-# for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
-HISTSIZE=2000
-HISTFILESIZE=4000
-
-# Don't record some commands
-export HISTIGNORE="&:[ ]*:exit:ls:bg:fg:history:clear"
-
-# check the window size after each command and, if necessary,
-# update the values of LINES and COLUMNS.
-shopt -s checkwinsize
-# set variable identifying the chroot you work in (used in the prompt below)
-if [[ -z ${debian_chroot} ]] && [[ -r /etc/debian_chroot ]]; then
-    debian_chroot=$(cat /etc/debian_chroot)
-fi
 
 
-# Reset
-Color_Off='\e[0m'       # Text Reset
-
-# Regular Colors
-Black='\e[0;30m'        # Black
-Red='\e[0;31m'          # Red
-Green='\e[0;32m'        # Green
-Yellow='\e[0;33m'       # Yellow
-Blue='\e[0;34m'         # Blue
-Purple='\e[0;35m'       # Purple
-Cyan='\e[0;36m'         # Cyan
-White='\e[0;37m'        # White
-
-# Bold
-BBlack='\e[1;30m'       # Black
-BRed='\e[1;31m'         # Red
-BGreen='\e[1;32m'       # Green
-BYellow='\e[1;33m'      # Yellow
-BBlue='\e[1;34m'        # Blue
-BPurple='\e[1;35m'      # Purple
-BCyan='\e[1;36m'        # Cyan
-BWhite='\e[1;37m'       # White
-
-# Underline
-UBlack='\e[4;30m'       # Black
-URed='\e[4;31m'         # Red
-UGreen='\e[4;32m'       # Green
-UYellow='\e[4;33m'      # Yellow
-UBlue='\e[4;34m'        # Blue
-UPurple='\e[4;35m'      # Purple
-UCyan='\e[4;36m'        # Cyan
-UWhite='\e[4;37m'       # White
-
-# Background
-On_Black='\e[40m'       # Black
-On_Red='\e[41m'         # Red
-On_Green='\e[42m'       # Green
-On_Yellow='\e[43m'      # Yellow
-On_Blue='\e[44m'        # Blue
-On_Purple='\e[45m'      # Purple
-On_Cyan='\e[46m'        # Cyan
-On_White='\e[47m'       # White
-
-# High Intensity
-IBlack='\e[0;90m'       # Black
-IRed='\e[0;91m'         # Red
-IGreen='\e[0;92m'       # Green
-IYellow='\e[0;93m'      # Yellow
-IBlue='\e[0;94m'        # Blue
-IPurple='\e[0;95m'      # Purple
-ICyan='\e[0;96m'        # Cyan
-IWhite='\e[0;97m'       # White
-
-# Bold High Intensity
-BIBlack='\e[1;90m'      # Black
-BIRed='\e[1;91m'        # Red
-BIGreen='\e[1;92m'      # Green
-BIYellow='\e[1;93m'     # Yellow
-BIBlue='\e[1;94m'       # Blue
-BIPurple='\e[1;95m'     # Purple
-BICyan='\e[1;96m'       # Cyan
-BIWhite='\e[1;97m'      # White
-
-# High Intensity backgrounds
-On_IBlack='\e[0;100m'   # Black
-On_IRed='\e[0;101m'     # Red
-On_IGreen='\e[0;102m'   # Green
-On_IYellow='\e[0;103m'  # Yellow
-On_IBlue='\e[0;104m'    # Blue
-On_IPurple='\e[0;105m'  # Purple
-On_ICyan='\e[0;106m'    # Cyan
-On_IWhite='\e[0;107m'   # White
-
-# Color man-pages
-export LESS_TERMCAP_mb=$'\e[01;31m'       # begin blinking
-export LESS_TERMCAP_md=$'\e[01;38;5;74m'  # begin bold
-export LESS_TERMCAP_me=$'\e[0m'           # end mode
-export LESS_TERMCAP_se=$'\e[0m'           # end standout-mode
-# export LESS_TERMCAP_so=$'\e[38;5;246m'    # begin standout-mode - info box
-export LESS_TERMCAP_so=$'\e[30;43m'
-export LESS_TERMCAP_ue=$'\e[0m'           # end underline
-export LESS_TERMCAP_us=$'\e[04;38;5;146m' # begin underline
-
-
-if [[ -x /usr/bin/tput ]] && tput setaf 1 >&/dev/null; then
-    # We have color support; assume it's compliant with Ecma-48
-    # (ISO/IEC-6429). (Lack of such support is extremely rare, and such
-    # a case would tend to support setf rather than setaf.)
-    color_prompt=yes
-else
-    color_prompt=
-fi
-
-HOST_COLOR=${BGreen}
-
-
-function _fuzzyfiles()  {
+function __fzf_complete() {
     [[ ${EN_FUZZY:-0} -eq 1 ]] || return 0
 
     local IFS=$'\n'
-    local DIR DIRPATH BASENAME FILES X
+    local comp_type=$1 # 'file' or 'dir'
+    local cur="${COMP_WORDS[COMP_CWORD]}"
+    local dirpath basename items choice
 
-    if [[ -z $2 ]]; then
-        # No argument yet: list files and dirs in .
-        FILES=$(find -L . -maxdepth 1 -mindepth 1 ! -name '.*' -printf '%f\n' 2>/dev/null |
-                sort -V)
-        BASENAME=""
-        DIRPATH=""
+    if [[ -z $cur ]]; then
+        dirpath="."
+        basename=""
     else
-        DIR="$2"
-        if [[ $DIR =~ ^~ ]]; then
-            DIR="${DIR/\~/$HOME}"
+        if [[ $cur =~ ^~ ]]; then
+            cur="${cur/\~/$HOME}"
         fi
 
-        # Split into directory path and basename
-        if [[ "$DIR" == */* ]]; then
-            DIRPATH="${DIR%/*}"
-            BASENAME="${DIR##*/}"
+        if [[ "$cur" == */* ]]; then
+            dirpath="${cur%/*}"
+            basename="${cur##*/}"
         else
-            DIRPATH="."
-            BASENAME="$DIR"
+            dirpath="."
+            basename="$cur"
         fi
-
-        # Decide whether to include dotfiles
-        if [[ $BASENAME == .* ]]; then
-            FILES=$(cd "$DIRPATH" 2>/dev/null && \
-                    find -L . -maxdepth 1 -mindepth 1 -name '.*' -printf '%f\n' 2>/dev/null)
-        else
-            FILES=$(cd "$DIRPATH" 2>/dev/null && \
-                    find -L . -maxdepth 1 -mindepth 1 ! -name '.*' -printf '%f\n' 2>/dev/null)
-        fi
-
     fi
-    # Run through fzf using the typed basename as filter
-    X=$(printf '%s\n' "$FILES" | fzf --filter "$BASENAME" 2>/dev/null)
-    COMPREPLY=($X)
 
-    # Prepend directory path if needed (strip leading ./ first)
-    if [[ -n $DIRPATH && $DIRPATH != "." ]]; then
-        COMPREPLY=("${COMPREPLY[@]/#/$(printf '%s/' "$DIRPATH")}")
+    # if dirpath is empty, set to "/" to handle root paths
+    [[ -z $dirpath ]] && dirpath="/"
+
+    # ensure dirpath exists
+    [[ ! -d "$dirpath" ]] && return 0
+
+    local items
+    if command -v fd &>/dev/null; then
+        local -a fd_opts
+        fd_opts=(--max-depth 1 --follow)
+        if [[ "$comp_type" == "dir" ]]; then
+            fd_opts+=(--type d)
+        fi
+        if [[ $basename == .* ]]; then
+            fd_opts+=(--hidden)
+        fi
+        items=$(cd "$dirpath" 2>/dev/null && command fd "${fd_opts[@]}" 2>/dev/null)
+    else
+        local -a find_args
+        find_args=(-L . -maxdepth 1 -mindepth 1)
+
+        if [[ "$comp_type" == "dir" ]]; then
+            find_args+=(-type d)
+        fi
+
+        if [[ $basename == .* ]]; then
+            find_args+=(-name '.*')
+        else
+            find_args+=('!' -name '.*')
+        fi
+        items=$(cd "$dirpath" 2>/dev/null && command find "${find_args[@]}" -printf '%f\n' 2>/dev/null | sort -V)
+    fi
+
+    [[ -z $items ]] && return 0
+
+    choice=$(printf '%s\n' "$items" | fzf --filter "$basename" --height "20%" --reverse --multi 2>/dev/null)
+    [[ -z $choice ]] && return 0
+
+    local -a replies
+    mapfile -t replies <<< "$choice"
+
+    if [[ -n $dirpath && $dirpath != "." ]]; then
+        local prefix
+        if [[ "$dirpath" == "/" ]]; then
+            prefix="/"
+        else
+            prefix="$dirpath/"
+        fi
+        COMPREPLY=("${replies[@]/#/$prefix}")
+    else
+        COMPREPLY=("${replies[@]}")
     fi
 
     # echo
-    # echo DIR=$DIR
-    # echo DIRPATH=$DIRPATH
-    # echo BASENAME=$BASENAME
-    # echo COMPREPLY=${COMPREPLY[@]}
+    # echo cur="$cur"
+    # echo dirpath="$dirpath"
+    # echo basename="$basename"
+    # echo choice="$choice"
+    # echo COMPREPLY="${COMPREPLY[*]}"
     # echo
 }
 
+
+function _fuzzyfiles()  {
+    __fzf_complete "file"
+}
+
+
 function _fuzzypath() {
-    [[ ${EN_FUZZY:-0} -eq 1 ]] || return 0
-
-    local IFS=$'\n'
-    local DIR DIRPATH BASENAME DIRS X
-
-    if [[ -z $2 ]]; then
-        # No argument yet: list non-hidden dirs in .
-        DIRS=$(find -L . -maxdepth 1 -mindepth 1 -type d ! -name '.*' -printf '%f\n' 2>/dev/null |
-               sort -V)
-        BASENAME=""
-        DIRPATH=""
-    else
-        DIR="$2"
-        if [[ $DIR =~ ^~ ]]; then
-            DIR="${DIR/\~/$HOME}"
-        fi
-
-        # Split into directory path and basename
-        if [[ "$DIR" == */* ]]; then
-            DIRPATH="${DIR%/*}"
-            BASENAME="${DIR##*/}"
-        else
-            DIRPATH="."
-            BASENAME="$DIR"
-        fi
-
-        # If user’s basename starts with dot, include hidden dirs too
-        if [[ $BASENAME == .* ]]; then
-            DIRS=$(cd "$DIRPATH" 2>/dev/null && \
-                   find -L . -maxdepth 1 -mindepth 1 -type d -name '.*' -printf '%f\n' 2>/dev/null)
-        else
-            DIRS=$(cd "$DIRPATH" 2>/dev/null && \
-              find -L . -maxdepth 1 -mindepth 1 -type d ! -name '.*' -printf '%f\n' 2>/dev/null)
-        fi
-    fi
-
-    X=$(printf '%s\n' "$DIRS" | fzf --filter "$BASENAME" 2>/dev/null)
-    COMPREPLY=($X)
-    # add DIRPATH as prefix
-    if [[ -n $DIRPATH && $DIRPATH != "." ]]; then
-        COMPREPLY=("${COMPREPLY[@]/#/$(printf '%s/' "$DIRPATH")}")
-    fi
-
-    # echo
-    # echo DIR=$DIR
-    # echo DIRPATH=$DIRPATH
-    # echo BASENAME=$BASENAME
-    # echo X=$X
-    # echo COMPREPLY=${COMPREPLY[@]}
-    # echo
+    __fzf_complete "dir"
 }
 
 
@@ -455,6 +296,145 @@ function __makePS1() {
     __makeTerminalTitle
 }
 
+
+Color_Off='\e[0m'       # Text Reset
+Black='\e[0;30m'        # Black
+Red='\e[0;31m'          # Red
+Green='\e[0;32m'        # Green
+Yellow='\e[0;33m'       # Yellow
+Blue='\e[0;34m'         # Blue
+Purple='\e[0;35m'       # Purple
+Cyan='\e[0;36m'         # Cyan
+White='\e[0;37m'        # White
+
+# Bold
+BBlack='\e[1;30m'       # Black
+BRed='\e[1;31m'         # Red
+BGreen='\e[1;32m'       # Green
+BYellow='\e[1;33m'      # Yellow
+BBlue='\e[1;34m'        # Blue
+BPurple='\e[1;35m'      # Purple
+BCyan='\e[1;36m'        # Cyan
+BWhite='\e[1;37m'       # White
+
+# Underline
+UBlack='\e[4;30m'       # Black
+URed='\e[4;31m'         # Red
+UGreen='\e[4;32m'       # Green
+UYellow='\e[4;33m'      # Yellow
+UBlue='\e[4;34m'        # Blue
+UPurple='\e[4;35m'      # Purple
+UCyan='\e[4;36m'        # Cyan
+UWhite='\e[4;37m'       # White
+
+# Background
+On_Black='\e[40m'       # Black
+On_Red='\e[41m'         # Red
+On_Green='\e[42m'       # Green
+On_Yellow='\e[43m'      # Yellow
+On_Blue='\e[44m'        # Blue
+On_Purple='\e[45m'      # Purple
+On_Cyan='\e[46m'        # Cyan
+On_White='\e[47m'       # White
+
+# High Intensity
+IBlack='\e[0;90m'       # Black
+IRed='\e[0;91m'         # Red
+IGreen='\e[0;92m'       # Green
+IYellow='\e[0;93m'      # Yellow
+IBlue='\e[0;94m'        # Blue
+IPurple='\e[0;95m'      # Purple
+ICyan='\e[0;96m'        # Cyan
+IWhite='\e[0;97m'       # White
+
+# Bold High Intensity
+BIBlack='\e[1;90m'      # Black
+BIRed='\e[1;91m'        # Red
+BIGreen='\e[1;92m'      # Green
+BIYellow='\e[1;93m'     # Yellow
+BIBlue='\e[1;94m'       # Blue
+BIPurple='\e[1;95m'     # Purple
+BICyan='\e[1;96m'       # Cyan
+BIWhite='\e[1;97m'      # White
+
+# High Intensity backgrounds
+On_IBlack='\e[0;100m'   # Black
+On_IRed='\e[0;101m'     # Red
+On_IGreen='\e[0;102m'   # Green
+On_IYellow='\e[0;103m'  # Yellow
+On_IBlue='\e[0;104m'    # Blue
+On_IPurple='\e[0;105m'  # Purple
+On_ICyan='\e[0;106m'    # Cyan
+On_IWhite='\e[0;107m'   # White
+
+# Color man-pages
+export LESS_TERMCAP_mb=$'\e[01;31m'       # begin blinking
+export LESS_TERMCAP_md=$'\e[01;38;5;74m'  # begin bold
+export LESS_TERMCAP_me=$'\e[0m'           # end mode
+export LESS_TERMCAP_se=$'\e[0m'           # end standout-mode
+# export LESS_TERMCAP_so=$'\e[38;5;246m'    # begin standout-mode - info box
+export LESS_TERMCAP_so=$'\e[30;43m'
+export LESS_TERMCAP_ue=$'\e[0m'           # end underline
+export LESS_TERMCAP_us=$'\e[04;38;5;146m' # begin underline
+
+
+if [[ -x /usr/bin/tput ]] && tput setaf 1 >&/dev/null; then
+    color_prompt=yes
+else
+    color_prompt=
+fi
+
+# enable/disable tmux loading
+if [[ $EUID -eq 0 ]]; then
+    EN_TMUX=0
+elif command -v tmux >/dev/null 2>&1; then
+    EN_TMUX=1
+else
+    EN_TMUX=0
+fi
+#EN_TMUX=0 # manual set tmux
+
+# is git available
+command -v git &>/dev/null && GIT_AVAILABLE=1 || GIT_AVAILABLE=0
+
+# set base session and git when logged in via ssh
+if [[ -n $SSH_CLIENT ]] || [[ -n $SSH_TTY ]]; then
+    base_session='C-b'
+    GIT=0
+else
+    base_session='C-a'
+    GIT=1
+fi
+
+# enable/disable fuzzy search
+# https://github.com/junegunn/fzf
+# fuzzy search
+# CTRL-T - Paste the selected files and directories onto the command-line
+# CTRL-R - Paste the selected command from history onto the command-line
+# ALT-C - cd into the selected directory
+[[ -f ~/.fzf.bash ]] && source ~/.fzf.bash
+command -v fzf &>/dev/null && EN_FUZZY=1 || EN_FUZZY=0
+FZF_TMUX=$EN_TMUX
+FZF_TMUX_HEIGHT="20%"
+
+
+# don't put duplicate lines in the history. See bash(1) for more options
+# ... or force ignoredups and ignorespace
+HISTCONTROL=ignoredups:ignorespace
+export HISTTIMEFORMAT="| %d.%m.%y %T =>  "
+shopt -s histappend # append to the history file, don't overwrite it
+HISTSIZE=2000
+HISTFILESIZE=4000
+export HISTIGNORE="&:[ ]*:exit:ls:bg:fg:history:clear"
+
+shopt -s checkwinsize # update the values of LINES and COLUMNS.
+
+if [[ -z ${debian_chroot} ]] && [[ -r /etc/debian_chroot ]]; then
+    debian_chroot=$(cat /etc/debian_chroot)
+fi
+
+HOST_COLOR=${BGreen}
+
 if [[ $color_prompt = yes ]]; then
     if ! LNAME=$(logname 2>/dev/null); then
         LNAME=$USER
@@ -480,20 +460,17 @@ if [ -x /usr/bin/dircolors ]; then
 fi
 
 # Alias definitions.
-# You may want to put all your additions into a separate file like
-# ~/.bash_aliases, instead of adding them here directly.
-# See /usr/share/doc/bash-doc/examples in the bash-doc package.
 if [[ -f ~/.bash_aliases ]]; then
-    . ~/.bash_aliases
+    source ~/.bash_aliases
 fi
 
 # source bash_completion
 if [[ -f /etc/bash_completion ]]; then
-    . /etc/bash_completion
+    source /etc/bash_completion
 fi
 
 if [[ -f /snap/lxd/current/etc/bash_completion.d/snap.lxd.lxc ]]; then
-    . /snap/lxd/current/etc/bash_completion.d/snap.lxd.lxc
+    source /snap/lxd/current/etc/bash_completion.d/snap.lxd.lxc
 fi
 
 # trap every command
@@ -511,7 +488,9 @@ export PAGER=less
 #fi
 
 # TMUX completion
-[[ -f ~/.tmux/tmux_completion.sh ]] && source ~/.tmux/tmux_completion.sh
+if [[ -f ~/.tmux/tmux_completion.sh ]]; then
+  source ~/.tmux/tmux_completion.sh
+fi
 
 
 # Is loaded via vim
@@ -556,22 +535,13 @@ bind '"\e[B": history-search-forward'
 # enable fuzzy search
 if [[ $EN_FUZZY -eq 1 ]]; then
     complete -o nosort -o nospace -o filenames -o bashdefault -F _fuzzypath cd mkdir rmdir du
-    complete -o nosort -o nospace -o filenames -o bashdefault -F _fuzzyfiles ls cat less more tail head cp mv rm vi vim nvim grep find diff tar gzip scp rsync chmod chown ln
+    complete -o nosort -o nospace -o filenames -o bashdefault -F _fuzzyfiles ls cat less more tail head cp mv rm vi vim nvim grep find diff tar gzip gunzip zip unzip scp rsync chmod chown ln
 fi
 
 
 # https://github.com/dvorka/hstr
 # if this is interactive shell, then bind hstr to Ctrl-r (for Vi mode check doc)
 # [[ -x $(command -v hstr) ]] && { if [[ $- =~ .*i.* ]]; then bind '"\C-r": "\C-a hstr -- \C-j"'; fi }
-
-# https://github.com/junegunn/fzf
-# fuzzy search
-# CTRL-T - Paste the selected files and directories onto the command-line
-# CTRL-R - Paste the selected command from history onto the command-line
-# ALT-C - cd into the selected directory
-[[ -f ~/.fzf.bash ]] && source ~/.fzf.bash
-FZF_TMUX=$EN_TMUX
-FZF_TMUX_HEIGHT="20%"
 
 # faster find
 # https://github.com/sharkdp/fd
