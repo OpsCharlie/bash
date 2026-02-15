@@ -500,7 +500,6 @@ bind '"\e[B": history-search-forward'
 if [[ $EN_FUZZY -eq 1 ]]; then
   complete -o nosort -o nospace -o filenames -o bashdefault -F _fuzzypath cd mkdir rmdir du pushd popd dirs tree
   complete -o nosort -o nospace -o filenames -o bashdefault -F _fuzzyfiles ls cat less more tail head cp mv rm vi vim nvim grep find diff tar gzip gunzip zip unzip scp rsync chmod chown ln touch nano stat file wc
-
 fi
 
 # https://github.com/dvorka/hstr
