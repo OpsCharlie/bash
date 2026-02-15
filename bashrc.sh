@@ -163,14 +163,13 @@ function __makePS1() {
   fi
 
   PS1=''
-
   PS1+="\[${Yellow}\]${timer_show} "
   PS1+="${debian_chroot:+($debian_chroot)}"
 
   if [[ ${USER} == root ]]; then
     PS1+="\[${BRed}\]" # root
   elif [[ ${USER} != "$LNAME" ]]; then
-    PS1+="\[${BBlue}\]" # normal user
+    PS1+="\[${BBlue}\]" # impersonated user
   else
     if [[ -n ${SSH_CONNECTION} ]]; then
       PS1+="\[${BGreen}\]" # normal user with ssh
@@ -389,7 +388,6 @@ fi
 
 # enable/disable fuzzy search
 # https://github.com/junegunn/fzf
-# fuzzy search
 # CTRL-T - Paste the selected files and directories onto the command-line
 # CTRL-R - Paste the selected command from history onto the command-line
 # ALT-C - cd into the selected directory
@@ -420,7 +418,6 @@ if [[ $color_prompt = yes ]]; then
     LNAME=$USER
   fi
   PROMPT_COMMAND=__makePS1
-  # PS2="\[${BPurple}\]>\[${Color_Off}\] " # continuation prompt
   if [[ ${USER} == root ]]; then
     PS2=" \[${BRed}\]>\[${Color_Off}\] " # root
   elif [[ ${USER} != "$LNAME" ]]; then
