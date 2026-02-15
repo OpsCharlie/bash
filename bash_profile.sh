@@ -24,4 +24,4 @@ mesg n
 [[ -f /var/run/motd.dynamic ]] && cat /var/run/motd.dynamic
 
 # make capslock also work for numbers
-command -v setxkbmap >/dev/null 2>&1 && setxkbmap -option caps:shiftlock
+# command -v setxkbmap >/dev/null 2>&1 && setxkbmap -option caps:shiftlock
