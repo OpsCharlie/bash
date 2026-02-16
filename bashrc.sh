@@ -166,10 +166,11 @@ function __makePS1() {
   PS1+="\[${Yellow}\]${timer_show} "
   PS1+="${debian_chroot:+($debian_chroot)}"
 
+  if [[ ${USER} != "$LNAME" ]]; then
+    PS1+="\[${BBlue}\][$LNAME] " # impersonated user
+  fi
   if [[ ${USER} == root ]]; then
     PS1+="\[${BRed}\]" # root
-  elif [[ ${USER} != "$LNAME" ]]; then
-    PS1+="\[${BBlue}\]" # impersonated user
   else
     if [[ -n ${SSH_CONNECTION} ]]; then
       PS1+="\[${BGreen}\]" # normal user with ssh
@@ -419,13 +420,6 @@ if [[ $color_prompt = yes ]]; then
     LNAME=$USER
   fi
   PROMPT_COMMAND=__makePS1
-  if [[ ${USER} == root ]]; then
-    PS2=" \[${BRed}\]>\[${Color_Off}\] " # root
-  elif [[ ${USER} != "$LNAME" ]]; then
-    PS2=" \[${BBlue}\]>\[${Color_Off}\] " # normal user
-  else
-    PS2=" \[${BGreen}\]>\[${Color_Off}\] " # normal user
-  fi
 else
   PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
 fi
