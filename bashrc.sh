@@ -219,6 +219,7 @@ function __makePS1() {
       first_line="${lines[0]}"
       branch="${first_line#'## '}"
       branch="${branch%%...*}"
+      branch="${branch%% *}"  # Remove extra info (e.g., 'detached at ...')
 
       # letters: S=staged, M=modified, D=deleted, ?=untracked
       for line in "${lines[@]:1}"; do
