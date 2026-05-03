@@ -393,8 +393,8 @@ fi
 # CTRL-T - Paste the selected files and directories onto the command-line
 # CTRL-R - Paste the selected command from history onto the command-line
 # ALT-C - cd into the selected directory
-[[ -f ~/.fzf.bash ]] && source ~/.fzf.bash
 command -v fzf &>/dev/null && EN_FUZZY=1 || EN_FUZZY=0
+[[ $EN_FUZZY -eq 1 ]] && eval "$(fzf --bash)"
 # FZF_TMUX=$EN_TMUX
 # FZF_TMUX_HEIGHT="20%"
 
