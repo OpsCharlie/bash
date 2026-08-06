@@ -9,20 +9,20 @@ alias l='ls $__LS_OPTIONS -CF'
 alias dir='dir $__LS_OPTIONS'
 alias vdir='vdir $__LS_OPTIONS'
 alias grep='grep --color=auto'
-alias fgrep='fgrep --color=auto'
-alias egrep='egrep --color=auto'
-
+alias fgrep='grep -F --color=auto'
+alias egrep='grep -E --color=auto'
 alias sudo='sudo '   # use aliases when using sudo
 
 alias cd..='cd ..'
 alias ..='cd ..'
 alias ...='cd ../..'
 alias a='cd ~/ansible/lxd'
-alias c='clear'
+alias r='cd ~/ansible/lxd/roles'
 
 alias tmux='tmux -2'
 alias bc='bc -l'
 alias historyg='history | grep '
+alias gd='git fetch -p ; git branch -r | awk '\''{print $1}'\'' | egrep -v -f /dev/fd/0 <(git branch -vv | grep origin) | awk '\''{print $1}'\'' | xargs git branch -D'
 
 alias mkdir='mkdir -p -v'
 alias mv='mv -v'
@@ -63,7 +63,8 @@ alias wget0='wget -O /dev/null'
 
 
 if [ -x "$(which highlight 2>&1)" ]; then
-    export LESSOPEN='| highlight --out-format xterm256 --quiet --force --style solarized-light %s'
+    export LESSOPEN='| highlight --out-format xterm256 --quiet --force --style darkplus %s'
+    export LESS='-R'
 fi
 
 # if [ -x "$(which pygmentize 2>&1)" ]; then
@@ -108,91 +109,6 @@ function qr() {
     curl https://qrenco.de/"$1"
 }
 
-function transfer() {
-    if [ $# -eq 0  ]; then
-        echo -e "No arguments specified. Usage:\ntransfer /tmp/test.md\ncat /tmp/test.md | transfer test.md\ntransfer <dir>"
-        return 1
-    fi
-    tmpfile=$( mktemp -t transferXXX  )
-    file=$1
-
-    # upload stdin or file
-    if tty -s; then
-        basefile=$(basename "$1" | sed -e 's/[^a-zA-Z0-9._-]/-/g')
-
-        if [ ! -e $file ]; then
-            echo "File $file doesn't exists."
-            return 1
-        fi
-
-        if [ -d $file ]; then
-            # tar directory and transfer tar
-            zipfile=$( mktemp -t transferXXX.tgz )
-            cd $(dirname $file) && tar cfz $zipfile $(basename $file)
-            curl --progress-bar --upload-file "$zipfile" "https://transfer.sh/$basefile.tgz" >> $tmpfile
-            rm -f $zipfile
-        else
-            # transfer file
-            curl --progress-bar --upload-file "$1" "https://transfer.sh/$basefile" >> $tmpfile
-        fi
-    else
-        # transfer pipe
-        curl --progress-bar --upload-file "-" "https://transfer.sh/$1" >> $tmpfile
-    fi
-
-    cat $tmpfile
-    echo
-    rm -f $tmpfile
-}
-
-
-
-function transfer_encrypt() {
-    if [ $# -eq 0  ]; then
-        echo -e "No arguments specified. Usage:\ntransfer /tmp/test.md\ncat /tmp/test.md | transfer test.md\ntransfer <dir>"
-        return 1
-    fi
-    tmpfile=$( mktemp -t transferXXX  )
-    file=$1
-
-    # upload stdin or file
-    if tty -s; then
-        basefile=$(basename "$1" | sed -e 's/[^a-zA-Z0-9._-]/-/g')
-
-        if [ ! -e $file ]; then
-            echo "File $file doesn't exists."
-            return 1
-        fi
-
-        if [ -d $file ]; then
-            # tar directory and transfer tar
-            zipfile=$( mktemp -t transferXXX.tgz )
-            cd $(dirname $file) && tar cfz $zipfile $(basename $file)
-            cat "$zipfile" | gpg -ac -o- | curl -X PUT --progress-bar --upload-file "-" "https://transfer.sh/encrypted_$basefile.tgz" >> $tmpfile
-            rm -f $zipfile
-        else
-            # transfer file
-            cat "$file" | gpg -ac -o- | curl -X PUT --progress-bar --upload-file "-" "https://transfer.sh/encrypted_$basefile" >> $tmpfile
-        fi
-    else
-        # transfer pipe
-        cat "$file" | gpg -ac -o- | curl -X PUT --progress-bar --upload-file "-" "https://transfer.sh/$1" >> $tmpfile
-    fi
-
-    cat $tmpfile
-    echo
-    rm -f $tmpfile
-}
-
-function transfer_decrypt() {
-    if [ $# -eq 0  ]; then
-        echo -e "No arguments specified. Usage:\ntransfer_decrypt Downloads/test.md"
-        return 1
-    fi
-    FILE="$1"
-    gpg --yes --output "$(dirname $FILE)/decrypted_$(basename $FILE | sed 's/encrypted_//g')" --decrypt "$FILE"
-}
-
 function urldecode() {
     awk -niord '{printf RT?$0chr("0x"substr(RT,2)):$0}' RS=%.. <<< "$@"
 }
@@ -205,3 +121,57 @@ function eth() {
     fi
 }
 
+function send() {
+    local expires=24 encrypt=0 OPTIND=1 opt
+    while getopts "er:" opt; do
+        case "$opt" in
+            e) encrypt=1 ;;
+            r) expires="$OPTARG" ;;
+            *) echo "Usage: send [-e] [-r hours] <file>"; return 1 ;;
+        esac
+    done
+    shift $((OPTIND - 1))
+
+    if [ $# -eq 0 ]; then
+        echo "Usage: send [-e] [-r hours] <file>"
+        return 1
+    fi
+    if [ ! -f "$1" ]; then
+        echo "'$1' is not a valid file"
+        return 1
+    fi
+
+    if [ "$encrypt" -eq 1 ]; then
+        gpg -ac -o - "$1" | curl -s -F "file=@-;filename=$1.gpg" -F "expires=$expires" https://0x0.st
+        # decrypt: gpg -d <file>.gpg > <file>
+    else
+        curl -s -F "file=@$1" -F "expires=$expires" https://0x0.st
+    fi
+    echo
+}
+
+function extract() {
+    if [ -f "$1" ]; then
+        case "$1" in
+            *.tar.bz2)   tar xjf "$1" ;;
+            *.tar.gz)    tar xzf "$1" ;;
+            *.tar.xz)    tar xJf "$1" ;;
+            *.tar)       tar xf "$1" ;;
+            *.tbz2)      tar xjf "$1" ;;
+            *.tgz)       tar xzf "$1" ;;
+            *.zip)       unzip "$1" ;;
+            *.7z)        7z x "$1" ;;
+            *.rar)       unrar x "$1" ;;
+            *.bz2)       bunzip2 "$1" ;;
+            *.gz)        gunzip "$1" ;;
+            *.Z)         uncompress "$1" ;;
+            *)           echo "'$1' cannot be extracted" ;;
+        esac
+    else
+        echo "'$1' is not a valid file"
+    fi
+}
+
+function mkcd() {
+    mkdir -p -- "$1" && cd -- "$1"
+}
